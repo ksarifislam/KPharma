@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>K Pharma – Stock, Purchases & Sales</title>
+<style>
+:root{--g:#5dff5d;--gd:#1f7a1f;--bg:#f3f6f3;--ink:#1a1f1a;--mut:#5b665b;--line:#c9d3c9;--card:#fff;--red:#ff4d4d;--sky:#e2fdfe;--lg:#c6efce;--ok:#e2efda}
+@media (prefers-color-scheme:dark){:root{--bg:#141a14;--ink:#e8efe8;--mut:#9fb09f;--line:#344334;--card:#1c241c;--sky:#143a3c;--lg:#1f4a28;--ok:#24401f}}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.4 Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink)}
+button,input,select,textarea{font:inherit;color:inherit}
+input,select,textarea{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:5px 7px;min-width:0}
+input:focus,select:focus,textarea:focus{outline:2px solid #2e9e2e;outline-offset:-1px}
+button{cursor:pointer;border:1px solid var(--gd);background:var(--g);color:#0b330b;border-radius:5px;padding:6px 12px;font-weight:700}
+button:hover{filter:brightness(.95)}
+button.sec{background:var(--card);color:var(--ink);border-color:var(--line);font-weight:600}
+button.dng{background:#ffd9d9;border-color:#c33;color:#700}
+button.sm{padding:2px 7px;font-size:12px}
+#login{max-width:340px;margin:12vh auto;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:24px}
+#login h1{margin:0 0 4px;font-size:22px}#login label{display:block;margin:12px 0 4px;color:var(--mut)}#login input{width:100%}
+#top{display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:var(--g);padding:8px 12px;border-bottom:1px solid var(--gd)}
+#top .brand{font-weight:700;font-size:16px;color:#0b330b;margin-right:10px}
+#top .nav{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+#top .nav button{background:#eaffea;border-color:#6bbf6b;font-weight:600}
+#top .nav button.on{background:#0b4d0b;color:#fff;border-color:#0b4d0b}
+#top .who{color:#0b330b;font-weight:600}
+main{padding:12px;max-width:1500px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:12px}
+.card h3{margin:0 0 8px;font-size:15px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px;align-items:start}
+.frm{display:grid;grid-template-columns:130px 1fr;gap:6px 8px;align-items:center}
+.frm .f{display:flex;gap:4px}.frm .f input{flex:1}
+.frm label{color:var(--mut)}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid var(--line);padding:4px 6px;vertical-align:top}
+th{background:var(--g);color:#0b330b;text-align:center;position:sticky;top:0}
+.tw{overflow:auto;max-height:68vh;border:1px solid var(--line)}
+td.c{text-align:center}td.r{text-align:right}
+.flt input{width:100%;padding:2px 4px;font-size:12px}
+.inv input{width:100%;border:0;border-radius:0;background:transparent;padding:4px}
+.inv td{padding:0}.inv td.sn{text-align:center;padding:4px}
+.inv td.tot{text-align:right;padding:4px}
+.pill{display:inline-block;padding:2px 6px;border-radius:4px;margin:2px}
+.lst{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:4px}
+.lst div{padding:3px 8px;border-bottom:1px solid var(--line)}
+.lst div.lg{background:var(--lg)}.lst div.sky{background:var(--sky)}
+.mut{color:var(--mut)}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:12px}
+#modal.on{display:flex}
+.mb{background:var(--card);border-radius:10px;padding:16px;max-width:min(96vw,720px);width:100%;max-height:92vh;overflow:auto}
+.mb h3{margin:0 0 10px}
+.pk .lst div{cursor:pointer}.pk .lst div.sel{background:var(--g);color:#0b330b;font-weight:700}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#0b4d0b;color:#fff;padding:10px 16px;border-radius:8px;display:none;z-index:60;max-width:90vw}
+.pager{display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.invoice{font-family:Arial;color:#000;background:#fff;padding:8px}
+.invoice table th{background:#eee;color:#000;position:static}
+.invoice td,.invoice th{border:1px solid #999}
+@media print{body>*:not(#modal){display:none!important}#modal{position:static;background:none;display:block;padding:0}.mb{box-shadow:none;max-width:none;max-height:none;padding:0}.noprint{display:none!important}}
+@media (max-width:600px){.frm{grid-template-columns:100px 1fr}}
+</style>
+</head>
+<body>
+<div id="login" style="display:none">
+  <h1>K Pharma</h1><div class="mut">Please log in to continue</div>
+  <label>User Name</label><input id="lu" autocomplete="username" autofocus>
+  <label>Password</label><input id="lp" type="password" autocomplete="current-password">
+  <div style="margin-top:16px"><button id="lb" style="width:100%">Login</button></div><div style="margin-top:12px;text-align:center"><a href="#" id="fpl" class="mut">Forgot password?</a><br><a href="#" id="ghl" class="mut">New device? Connect GitHub data</a></div>
+</div>
+<div id="app" style="display:none">
+  <div id="top"><span class="brand" id="brand">K Pharma</span><div class="nav" id="nav"></div><span class="who" id="who"></span><button class="sec" id="syncb">Backup: not connected</button><button class="sec" id="lo">Logout</button></div>
+  <main id="view"></main>
+</div>
+<div id="modal"></div><div id="toast"></div>
+<script type="application/octet-stream" id="seed">H4sIANOK+GoC/1VPy2rDMBD8FaNTCz0oVh3HvYUESuklkN5KDmtlFauVJaEHaQj+93rtktDTzuxjZvbKfA6yg4iRvRSfh6eCRTB3EjDlYG80RwwTuTILPY6IrY+9tmyc+TNRpSrxrKq2rIWsRFXLpWyhrFuJNaxkXVZVUy5bgYqLRQ0o+RKgUbwRnItV0ypSkt1plEoh40CmRsdEplcmXe/B6ns84+QNKxf6mQz0Baak7Wm+i53zFO692HUQeiAT/PFbuNBccPKEtKBj9gGtwUQb++y9izq5QI5j4xUNlW0Y1aZ59GijdvY/e9i58xHDI3U34GM2eF9If+s7kN+zzZv9Qjm1D3OOcsqxdzC7XEKewCYg9ATWo0hEn7Qs9s7k22nqAr2w4DMmmXIYfgGmduKj4gEAAA==</script>
+<script>
+"use strict";
+/* ================= helpers ================= */
+const $=(s,e=document)=>e.querySelector(s), $$=(s,e=document)=>[...e.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const up=s=>String(s??'').trim().toUpperCase();
+const pad=(n,l=2)=>String(n).padStart(l,'0');
+const isoRe=/^\d{4}-\d\d-\d\d$/;
+const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+const addDays=(iso,n)=>{const [y,m,d]=iso.split('-').map(Number);const t=new Date(y,m-1,d+n);return t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate())};
+const fd=iso=>isoRe.test(iso||'')?iso.slice(8)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4):(iso||'');
+const fd2=iso=>isoRe.test(iso||'')?iso.slice(8)+'/'+iso.slice(5,7)+'/'+iso.slice(2,4):(iso||'');
+const n2=v=>Math.round((Number(v)||0)*100)/100;
+const isNum=v=>v!==''&&v!==null&&v!==undefined&&!isNaN(Number(v));
+const fmt=v=>(v===''||v==null)?'':(Math.round(Number(v)*100)/100).toString();
+function toast(m,ms=2600){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',ms)}
+function sha256(str){const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+ const b=new TextEncoder().encode(str),l=b.length,n=((l+9+63)>>6)<<6,m=new Uint8Array(n);m.set(b);m[l]=0x80;const dv=new DataView(m.buffer);dv.setUint32(n-8,Math.floor(l*8/4294967296));dv.setUint32(n-4,(l*8)>>>0);
+ let H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];const w=new Array(64),R=(x,k)=>(x>>>k)|(x<<(32-k));
+ for(let o=0;o<n;o+=64){for(let i=0;i<16;i++)w[i]=dv.getUint32(o+i*4);for(let i=16;i<64;i++){const s0=R(w[i-15],7)^R(w[i-15],18)^(w[i-15]>>>3),s1=R(w[i-2],17)^R(w[i-2],19)^(w[i-2]>>>10);w[i]=(w[i-16]+s0+w[i-7]+s1)|0}
+  let [a,bb,c,d,e,f,g,h]=H;for(let i=0;i<64;i++){const S1=R(e,6)^R(e,11)^R(e,25),ch=(e&f)^(~e&g),t1=(h+S1+ch+K[i]+w[i])|0,S0=R(a,2)^R(a,13)^R(a,22),mj=(a&bb)^(a&c)^(bb&c),t2=(S0+mj)|0;h=g;g=f;f=e;e=(d+t1)|0;d=c;c=bb;bb=a;a=(t1+t2)|0}
+  H=[H[0]+a,H[1]+bb,H[2]+c,H[3]+d,H[4]+e,H[5]+f,H[6]+g,H[7]+h].map(x=>x|0)}
+ return H.map(x=>pad((x>>>0).toString(16),8)).join('')}
+const hashPw=(name,pw)=>sha256('kp|'+String(name).toLowerCase()+'|'+pw);
+function csv(name,head,rows){const q=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};const t='﻿'+[head,...rows].map(r=>r.map(q).join(',')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download=name;a.click()}
+/* ================= storage ================= */
+let DB=null,USER=null,PAGE='sales';
+const idb={db:null,open(){return new Promise(r=>{try{const q=indexedDB.open('kpharma_web',1);q.onupgradeneeded=()=>q.result.createObjectStore('kv');q.onsuccess=()=>{this.db=q.result;r(true)};q.onerror=()=>r(false)}catch(e){r(false)}})},
+ get(k){return new Promise(r=>{if(!this.db)return r(null);const q=this.db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>r(q.result||null);q.onerror=()=>r(null)})},
+ set(k,v){return new Promise(r=>{try{if(!this.db)return r(false);const t=this.db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=()=>r(true);t.onerror=()=>r(false)}catch(e){r(false)}})}};
+let saveT=null;const schedSave=()=>{clearTimeout(saveT);saveT=setTimeout(()=>idb.set('db',DB),400)};
+let cache={};const bump=()=>{cache={};schedSave();syncSoon()};
+const fixDB=d=>{d.returns=d.returns||[];d.resets=d.resets||[];return d};
+async function loadSeed(){const b=atob($('#seed').textContent.trim());const u=Uint8Array.from(b,c=>c.charCodeAt(0));const s=new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'));return fixDB(JSON.parse(await new Response(s).text()))}
+/* ================= core logic (ported from the VBA) ================= */
+function nextProductId(){const n=DB.purchases.length;if(!n)return'KP000001';const l=String(DB.purchases[n-1].id||'');if(l.slice(0,2).toUpperCase()==='KP'&&/^\d+$/.test(l.slice(2)))return'KP'+pad(parseInt(l.slice(2),10)+1,6);return'KP000001'}
+function reArrange(){DB.purchases.sort((a,b)=>{const x=up(a.id),y=up(b.id);return x<y?-1:x>y?1:0});bump()} /* ReArrangeAndNumber – SN = index+1 */
+function batchMap(){if(cache.bm)return cache.bm;const m=new Map();for(const p of DB.purchases){const k=up(p.id)+'|'+up(p.bt);m.set(k,(m.get(k)||0)+(+p.q||0))}for(const r of DB.returns){const k=up(r.id)+'|'+up(r.bt);m.set(k,(m.get(k)||0)+(+r.q||0))}for(const s of DB.sales){const k=up(s.id)+'|'+up(s.bt);m.set(k,(m.get(k)||0)-(+s.q||0))}return cache.bm=m}
+const batchStock=(pid,bt)=>n2(batchMap().get(up(pid)+'|'+up(bt))||0);
+function stockList(){if(cache.st)return cache.st;const m=new Map();for(const p of DB.purchases){const k=up(p.id);if(!k)continue;let e=m.get(k);if(!e){e={id:k,co:p.co,pn:p.pn,gn:p.gn,df:p.df,pq:0,rq:0,sq:0};m.set(k,e)}e.pq+=+p.q||0}
+ for(const r of DB.returns){const e=m.get(up(r.id));if(e)e.rq+=+r.q||0}
+ for(const s of DB.sales){const e=m.get(up(s.id));if(e)e.sq+=+s.q||0}
+ const a=[...m.values()].sort((x,y)=>x.id<y.id?-1:x.id>y.id?1:0);a.forEach(e=>{e.pq=n2(e.pq);e.rq=n2(e.rq);e.sq=n2(e.sq);e.stock=n2(e.pq+e.rq-e.sq)});return cache.st=a}
+function nextInvoice(){const pre=pad(new Date().getMonth()+1)+pad(new Date().getFullYear()%100);let mx=0;for(const s of DB.sales){const v=String(s.inv||'');if(v.toLowerCase().indexOf(pre.toLowerCase()+'/')===0){const p=v.split('/');if(p.length===2&&isNum(p[1])&&parseInt(p[1],10)>mx)mx=parseInt(p[1],10)}}return pre+'/'+pad(mx+1,5)}
+function alertLists(){const t=todayISO(),lim=addDays(t,+DB.settings.expDays||30),ex=new Set();
+ for(const p of DB.purchases){if(!isoRe.test(p.ex||''))continue;if(p.ex>=t&&p.ex<=lim&&p.pn&&batchStock(p.id,p.bt)>0)ex.add(p.co+' - '+p.pn+' (Exp: '+fd2(p.ex)+')')}
+ const c1=new Set(DB.settings.cat1.map(x=>x.trim().toLowerCase())),c2=new Set(DB.settings.cat2.map(x=>x.trim().toLowerCase())),sh=new Map();
+ for(const s of stockList()){const f=String(s.df||'').trim().toLowerCase();if((c1.has(f)&&s.stock<=DB.settings.thr1)||(c2.has(f)&&s.stock<=DB.settings.thr2)){const k=s.co+' - '+s.pn;sh.set(k,(sh.get(k)||s.stock===0)&&s.stock===0||sh.get(k)===true)}}
+ const srt=a=>a.sort((x,y)=>up(x)<up(y)?-1:up(x)>up(y)?1:0);
+ return{exp:srt([...ex]),short:srt([...sh.keys()]).map(k=>({t:k,zero:sh.get(k)}))}}
+const uniq=a=>[...new Set(a.filter(x=>x!==''&&x!=null))];
+/* ================= modals ================= */
+function modal(html){const m=$('#modal');m.innerHTML='<div class="mb">'+html+'</div>';m.classList.add('on');return m.firstChild}
+function closeModal(){const m=$('#modal');m.classList.remove('on');m.innerHTML=''}
+function pick(title,items,cur){return new Promise(res=>{let sel=cur&&items.includes(cur)?cur:null;const mb=modal(`<div class="pk"><h3>${esc(title)}</h3><input id="pks" placeholder="Search…" style="width:100%;margin-bottom:6px"><div class="lst" id="pkl" style="max-height:50vh"></div><div class="mut" id="pkst" style="margin:6px 0"></div><div class="row"><button id="pko">OK</button><button class="sec" id="pkc">Cancel</button><button class="sec" id="pkx">Clear selection</button></div></div>`);
+ const L=$('#pkl',mb),draw=()=>{const q=$('#pks',mb).value.toLowerCase();const a=items.filter(x=>String(x).toLowerCase().includes(q));L.innerHTML=a.slice(0,500).map((x,i)=>`<div data-i="${i}" class="${x===sel?'sel':''}">${x===sel?'[Y] ':'[ ] '}${esc(x)}</div>`).join('')||'<div class="mut">No items</div>';L._a=a;$('#pkst',mb).textContent=(sel?'1 item selected':'No item selected')+(a.length>500?' · showing first 500 – refine the search':'')};
+ L.onclick=e=>{const d=e.target.closest('[data-i]');if(!d)return;sel=L._a[+d.dataset.i];draw()};L.ondblclick=e=>{const d=e.target.closest('[data-i]');if(d){closeModal();res(L._a[+d.dataset.i])}};
+ $('#pks',mb).oninput=draw;$('#pko',mb).onclick=()=>{closeModal();res(sel||'')};$('#pkc',mb).onclick=()=>{closeModal();res(null)};$('#pkx',mb).onclick=()=>{sel=null;draw()};draw();$('#pks',mb).focus()})}
+/* ================= table component ================= */
+const TV={};
+function mountTable(el,key,o){const st=TV[key]||(TV[key]={f:{},sort:null,page:0});const ps=o.pageSize||100;
+ el.innerHTML=`<div class="row" style="margin-bottom:6px"><span class="mut" id="${key}_n"></span><span style="flex:1"></span>${o.extra||''}<button class="sec sm" data-x="exp">Export CSV</button></div><div class="tw"><table><thead><tr>${o.cols.map((c,i)=>`<th data-s="${i}" style="cursor:pointer">${esc(c.h)} <span class="mut"></span></th>`).join('')}${o.actions?'<th>Action</th>':''}</tr><tr class="flt">${o.cols.map((c,i)=>`<th><input data-f="${i}" value="${esc(st.f[i]||'')}" placeholder="filter"></th>`).join('')}${o.actions?'<th></th>':''}</tr></thead><tbody></tbody></table></div><div class="pager"></div>`;
+ const tb=$('tbody',el),pg=$('.pager',el);let view=[];
+ const compute=()=>{let it=o.items().map(x=>({x,c:o.cols.map(c=>c.v(x))}));const fs=Object.entries(st.f).filter(([,v])=>v);if(fs.length)it=it.filter(r=>fs.every(([i,v])=>String(r.c[i]??'').toLowerCase().includes(v.toLowerCase())));
+  if(st.sort){const[i,d]=st.sort,col=o.cols[i];const k=r=>col.s?col.s(r.x):r.c[i];it.sort((a,b)=>{let p=k(a),q=k(b);if(isNum(p)&&isNum(q)){p=+p;q=+q}else{p=String(p??'').toLowerCase();q=String(q??'').toLowerCase()}return(p<q?-1:p>q?1:0)*d})}view=it};
+ const draw=()=>{compute();const pages=Math.max(1,Math.ceil(view.length/ps));if(st.page>=pages)st.page=pages-1;const sl=view.slice(st.page*ps,st.page*ps+ps);
+  tb.innerHTML=sl.map(r=>`<tr>${o.cols.map((c,i)=>`<td class="${c.cls||''}">${esc(r.c[i])}</td>`).join('')}${o.actions?`<td style="white-space:nowrap">${o.actions.map(a=>`<button class="sm ${a.cls||'sec'}" data-a="${a.k}" data-i="${o.id(r.x)}">${a.l}</button>`).join(' ')}</td>`:''}</tr>`).join('')||`<tr><td colspan="${o.cols.length+1}" class="mut">No records</td></tr>`;
+  $('#'+key+'_n').textContent=view.length+' record(s)';pg.innerHTML=`<button class="sec sm" data-p="-1">◀</button><span>Page ${st.page+1} / ${pages}</span><button class="sec sm" data-p="1">▶</button>`;
+  $$('th[data-s] span',el).forEach((s,i)=>s.textContent=st.sort&&st.sort[0]===i?(st.sort[1]>0?'▲':'▼'):'')};
+ el.oninput=e=>{if(e.target.dataset.f!==undefined){st.f[e.target.dataset.f]=e.target.value;st.page=0;clearTimeout(draw.t);draw.t=setTimeout(draw,200)}};
+ el.onclick=e=>{const t=e.target;if(t.closest('th[data-s]')&&!t.closest('.flt')){const i=+t.closest('th').dataset.s;st.sort=st.sort&&st.sort[0]===i?[i,-st.sort[1]]:[i,1];draw()}
+  else if(t.dataset.p){st.page+=+t.dataset.p;if(st.page<0)st.page=0;draw()}
+  else if(t.dataset.x==='exp'){compute();csv((o.name||key)+'.csv',o.cols.map(c=>c.h),view.map(r=>r.c))}
+  else if(t.dataset.a){o.onAction(t.dataset.a,+t.dataset.i)}};
+ draw()}
+/* ================= purchases entry ================= */
+const PF={A:null,B:null};
+const newPF=()=>({row:'',date:todayISO(),company:'',generic:'',product:'',pid:nextProductId(),form:'',batch:'',exp:'',loc:'',box:'',qty:'',unit:'',buy:''});
+const pfFields=[['row','SN/Row No.','number'],['date','Purchase Date','date'],['company','Company Name','pick'],['generic','Generic Name','pick'],['product','Product Name','pick'],['pid','Product ID','pick'],['form','Dosage Form','pick'],['batch','Batch No.','text'],['exp','Exp. Date','date'],['loc','Location','pick'],['box','Price/Box','number'],['qty','Quantity','number'],['unit','Unit Price','number'],['buy','Buying Price','number']];
+const pfList=k=>({company:()=>DB.lists.companies,generic:()=>uniq(DB.purchases.map(p=>p.gn)),product:()=>uniq(DB.purchases.map(p=>p.pn)),pid:()=>uniq(DB.purchases.map(p=>p.id)),form:()=>DB.lists.forms,loc:()=>DB.lists.locs}[k]());
+const lastRowNo=()=>DB.purchases.length+5;
+function pfRender(id){const F=PF[id];return`<div class="card" id="pf${id}"><h3>${id==='A'?'New Entry-By_Modification':'New Entry-[No Data]'}</h3><div class="frm"><label>User Name</label><div><b>${esc(USER.name)}</b></div><label>Last empty row</label><div id="pf${id}_last">${lastRowNo()+1}</div>
+ ${pfFields.map(([k,l,t])=>`<label>${l}</label><div class="f"><input data-k="${k}" type="${t==='pick'?'text':t}" ${t==='number'?'step="any"':''} ${{company:'list="dlCo"',generic:'list="dlGn"',product:'list="dlPn"'}[k]||''} value="${esc(F[k])}">${t==='pick'?`<button class="sec sm" data-pk="${k}" title="Select from list">▾</button>`:''}</div>`).join('')}</div>
+ ${id==='B'?'<div class="mut" style="margin-top:6px">Company, Generic and Product names are free to type or select here – no auto-fill.</div>':''}
+ <div class="row" style="margin-top:12px"><button data-act="save">Purchases-${id==='A'?'G':'Y'} (Save)</button><button class="sec" data-act="view">View Purchases-${id==='A'?'G':'Y'}</button><button class="sec" data-act="clear">Clear Data</button></div></div>`}
+function pfSync(id){const F=PF[id],root=$('#pf'+id);if(!root)return;$$('input[data-k]',root).forEach(i=>{i.value=F[i.dataset.k]});$('#pf'+id+'_last').textContent=lastRowNo()+1}
+function pfLookup(F,k){const v=F[k];if(!v)return;const col=k==='generic'?'gn':'pn';if(k==='generic')F.product='';else F.generic='';let f=null;const lv=v.toLowerCase();for(let i=DB.purchases.length-1;i>=0;i--){if(String(DB.purchases[i][col]).toLowerCase()===lv){f=DB.purchases[i];break}}
+ if(f){F.company=f.co;F.pid=f.id;F.form=f.df;if(col==='pn')F.generic=f.gn;else F.product=f.pn}else{F.company='';F.form='';F.pid=nextProductId()}}
+function pfClear(id){const F=PF[id];Object.assign(F,{row:'',company:'',generic:'',product:'',pid:nextProductId(),form:'',batch:'',exp:'',loc:'',box:'',qty:'',unit:'',buy:'',date:todayISO()});pfSync(id)}
+function pfSave(id){const F=PF[id];if(!isoRe.test(F.exp)){alert('Invalid Expiration Date ('+(id==='A'?'G16':'Y16')+').');return}
+ const rec=()=>({d:F.date,id:F.pid,co:F.company,pn:F.product,gn:F.generic,df:F.form,bt:F.batch,ex:F.exp,lo:F.loc,bx:n2(F.box),up:n2(F.unit),q:n2(F.qty),tp:Number(F.buy)||0,u:USER.name});
+ if(F.row===''||Number(F.row)===0){DB.purchases.push(rec());Object.assign(F,{company:'',generic:'',product:'',pid:'',form:'',batch:'',exp:'',loc:'',box:'',qty:'',unit:'',buy:''});toast('Purchase saved successfully!')}
+ else{const r=Number(F.row);if(r<6)return;const i=r-6;if(i>=DB.purchases.length){alert('Record not found.\nRow '+r+' is empty. The last record is on row '+lastRowNo()+'.');return}
+  if(!confirm('Overwrite row '+r+'?'))return;DB.purchases[i]=rec();Object.assign(F,{row:'',company:'',generic:'',product:'',pid:'',form:'',batch:'',exp:'',loc:'',box:'',qty:'',unit:'',buy:''});toast('Updated successfully!')}
+ reArrange();F.pid=nextProductId();PF.A.pid=PF.B.pid=F.pid===PF[id==='A'?'B':'A'].pid?F.pid:PF[id==='A'?'B':'A'].pid;pfSync('A');pfSync('B')}
+function pfView(id){const F=PF[id];if(!isNum(F.row)||F.row===''){alert('Please enter a valid row number in cell '+(id==='A'?'G8':'Y8')+' to view a record.');return}
+ const r=Math.floor(Number(F.row));if(r<=5){alert('Invalid Row. Please enter a row number greater than 5.');return}if(r>lastRowNo()){alert('Record not found.\nRow '+r+' is empty. The last record is on row '+lastRowNo()+'.');return}
+ const p=DB.purchases[r-6];Object.assign(F,{date:p.d,company:p.co,generic:p.gn,product:p.pn,pid:p.id,form:p.df,batch:p.bt,exp:p.ex,loc:p.lo,box:fmt(p.bx),qty:fmt(p.q),unit:fmt(p.up),buy:fmt(p.tp)});pfSync(id);toast('Displaying record from row '+r+'.')}
+function pagePurchase(){PF.A=PF.A||newPF();PF.B=PF.B||newPF();
+ $('#view').innerHTML=`<div class="row" style="margin-bottom:10px"><button class="sec" id="lstTog">Hide/Un-hide Column [Data Helper]</button><button class="sec" id="fclr">Filter Clear</button></div><div id="lists" style="display:none"></div><datalist id="dlCo">${DB.lists.companies.map(x=>`<option value="${esc(x)}">`).join('')}</datalist><datalist id="dlGn">${uniq(DB.purchases.map(p=>p.gn)).map(x=>`<option value="${esc(x)}">`).join('')}</datalist><datalist id="dlPn">${uniq(DB.purchases.map(p=>p.pn)).map(x=>`<option value="${esc(x)}">`).join('')}</datalist><div class="grid2">${pfRender('A')}${pfRender('B')}</div>`;
+ $('#view').onchange=e=>{const i=e.target;const root=i.closest('[id^=pf]');if(!root||!i.dataset.k)return;const id=root.id.slice(2),F=PF[id],k=i.dataset.k;F[k]=i.value;
+  if((k==='generic'||k==='product')&&id==='A')pfLookup(F,k);if(k==='box'||k==='qty'){F.unit=isNum(F.box)&&isNum(F.qty)&&Number(F.qty)!==0?String(n2(Number(F.box)/Number(F.qty))):'0'}pfSync(id)};
+ $('#view').onclick=async e=>{const b=e.target.closest('button');if(!b)return;const root=b.closest('[id^=pf]');
+  if(b.id==='lstTog'){const L=$('#lists');if(L.style.display==='none'){L.style.display='';listsPanel(L)}else L.style.display='none';return}
+  if(b.id==='fclr'){clearFilters();return}
+  if(!root)return;const id=root.id.slice(2),F=PF[id];
+  if(b.dataset.pk){const k=b.dataset.pk;const v=await pick('Select One Item',pfList(k),F[k]);if(v===null)return;F[k]=v;if((k==='generic'||k==='product')&&id==='A')pfLookup(F,k);pfSync(id)}
+  else if(b.dataset.act==='save')pfSave(id);else if(b.dataset.act==='view')pfView(id);else if(b.dataset.act==='clear'){pfClear(id);toast('Form has been cleared and is ready for the next entry.')}};
+ $('#view').ondblclick=async e=>{const i=e.target;if(i.dataset&&i.dataset.k&&['company','generic','product','pid','form','loc'].includes(i.dataset.k)){const root=i.closest('[id^=pf]'),id=root.id.slice(2),F=PF[id],k=i.dataset.k;const v=await pick('Select One Item',pfList(k),F[k]);if(v===null)return;F[k]=v;if((k==='generic'||k==='product')&&id==='A')pfLookup(F,k);pfSync(id)}}}
+function listsPanel(L){const d=DB.lists;L.innerHTML=`<div class="card"><h3>Data Helper – lists (one item per line)</h3><div class="grid2"><div>Company Name<textarea id="l1" rows="8" style="width:100%">${esc(d.companies.join('\n'))}</textarea></div><div>Location<textarea id="l2" rows="8" style="width:100%">${esc(d.locs.join('\n'))}</textarea></div><div>Dosage Form<textarea id="l3" rows="8" style="width:100%">${esc(d.forms.join('\n'))}</textarea></div></div><div style="margin-top:8px"><button id="lsv">Save lists</button></div></div>`;
+ $('#lsv',L).onclick=()=>{const g=i=>$('#'+i,L).value.split('\n').map(s=>s.trim()).filter(Boolean);d.companies=g('l1');d.locs=g('l2');d.forms=g('l3');bump();toast('Lists saved.')}}
+/* ================= sales entry ================= */
+const NL=21;let SF=null;
+const newSF=()=>({inv:nextInvoice(),date:todayISO(),lines:Array.from({length:NL},()=>({id:'',pn:'',q:'',up:'',tp:'',bt:'',err:false})),disc:'',given:'',srch:''});
+const lineBatch=l=>String(l.bt||'').trim().split(' ')[0].trim();
+function sfTotals(){let t=0;for(const l of SF.lines)if(isNum(l.tp)&&l.tp!=='')t+=Number(l.tp);const pay=t-(Number(SF.disc)||0),ret=(Number(SF.given)||0)-pay;return{t:n2(t),pay:n2(pay),ret:n2(ret)}}
+function sfDrawTot(){const x=sfTotals();const s=(i,v)=>{const e=$('#'+i);if(e)e.textContent=fmt(v)};s('t11',x.t);s('t15',x.pay);s('t19',x.ret);s('t31',x.t);s('t32',x.pay)}
+function sfRow(i){const l=SF.lines[i],tr=$('#sl'+i);if(!tr)return;const sn=(l.id!==''||l.pn!=='')?1:0;tr.querySelector('.sn').textContent=sn?SF.lines.slice(0,i+1).filter(z=>z.id!==''||z.pn!=='').length:'';
+ $$('input[data-k]',tr).forEach(inp=>{inp.value=l[inp.dataset.k]});const q=tr.querySelector('[data-k=q]');q.style.background=l.err?'#ff4d4d':'';const bt=tr.querySelector('[data-k=bt]');bt.style.background=l.bt!==''?'var(--ok)':'';tr.querySelector('.tot').textContent=l.err&&l.tp==='Error: No Stock'?'Error: No Stock':fmt(l.tp)}
+function sfNameChange(i){const l=SF.lines[i];SF.lines[i].err=false;if(l.pn.trim()===''){l.id='';l.up='';return}let f=null;const v=up(l.pn);for(let k=DB.purchases.length-1;k>=0;k--){if(up(DB.purchases[k].pn)===v){f=DB.purchases[k];break}}
+ if(f){l.id=f.id;l.up=fmt(f.up);const bt=f.bt;l.bt=isoRe.test(f.d)?bt+' ('+fd2(f.d)+')':bt}else{l.id='';l.up=''}sfCalc(i)}
+function sfCalc(i,fromQty){const l=SF.lines[i];if(!fromQty)l.err=false;l.tp=(isNum(l.q)&&isNum(l.up)&&l.q!==''&&l.up!=='')?String(Number(l.q)*Number(l.up)):'';}
+function sfQtyCheck(i){const l=SF.lines[i];l.err=false;sfCalc(i,true);if(isNum(l.q)&&Number(l.q)>0&&l.id!==''){if(String(l.bt)===''){alert('Please select a Batch Number (Column Q) before entering quantity.');l.err=true;l.tp='';return}const st=batchStock(l.id,lineBatch(l));if(Number(l.q)>st){alert('Stock Alert for Batch: '+lineBatch(l)+'\n\nAvailable Stock: '+st+'\nRequested: '+l.q);l.err=true;l.tp='Error: No Stock'}}}
+function batchesFor(pid){const seen=new Set(),d=new Map();for(const p of DB.purchases){if(pid!==''&&pid!==p.id)continue;if(p.bt==='')continue;const k=p.id+'|'+p.bt;if(seen.has(k))continue;seen.add(k);if(batchStock(p.id,p.bt)>0){const s=isoRe.test(p.d)?p.bt+' ('+fd2(p.d)+')':p.bt;d.set(s,1)}}return[...d.keys()]}
+function sfAlerts(){const A=alertLists();const e=$('#alExp'),s=$('#alSh');if(!e)return;e.innerHTML=A.exp.map(x=>`<div>${esc(x)}</div>`).join('')||'<div class="mut">None</div>';s.innerHTML=A.short.map(x=>`<div class="${x.zero?'lg':'sky'}">${esc(x.t)}</div>`).join('')||'<div class="mut">None</div>';$('#alEc').textContent=A.exp.length;$('#alSc').textContent=A.short.length}
+function sfSearch(){const q=SF.srch.trim().toLowerCase(),o=$('#sres');if(!q){o.innerHTML='';return}const r=[];for(const p of DB.purchases){if(String(p.pn).toLowerCase().includes(q)||String(p.gn).toLowerCase().includes(q)){r.push(p);if(r.length>=300)break}}
+ o.innerHTML=`<table><thead><tr><th>Search of name</th><th>Brand Name</th><th>Location</th></tr></thead><tbody>${r.map(p=>`<tr data-pn="${esc(p.pn)}" style="cursor:pointer"><td>${esc(p.gn)}</td><td>${esc(p.pn)}</td><td>${esc(p.lo)}</td></tr>`).join('')}</tbody></table>${r.length>=300?'<div class="mut">Showing first 300 matches</div>':''}`}
+function invoiceHTML(snap){return`<div class="invoice"><div style="text-align:center"><b style="font-size:18px">${esc(DB.settings.shop)}</b></div><div style="display:flex;justify-content:space-between;margin:8px 0"><div>Invoice#: <b>${esc(snap.inv)}</b></div><div>Date: <b>${fd2(snap.date)}</b></div></div>
+ <table><thead><tr><th>SN</th><th>Product ID</th><th>Product Name</th><th>Quantity</th><th>Unit Price</th><th>Total Price</th></tr></thead><tbody>${snap.lines.map((l,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(l.id)}</td><td>${esc(l.pn)}</td><td style="text-align:center">${esc(l.q)}</td><td style="text-align:right">${fmt(l.up)}</td><td style="text-align:right">${esc(fmt(l.tp))}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="5" style="text-align:right"><b>Total</b></td><td style="text-align:right"><b>${fmt(snap.t)}</b></td></tr>${snap.disc?`<tr><td colspan="5" style="text-align:right">Discount</td><td style="text-align:right">${fmt(snap.disc)}</td></tr>`:''}<tr><td colspan="5" style="text-align:right"><b>Payable Amount</b></td><td style="text-align:right"><b>${fmt(snap.pay)}</b></td></tr></tfoot></table></div>`}
+function sfSnap(onlyValid){const x=sfTotals();const user=USER.name,given=SF.given;let L=SF.lines.filter(l=>l.id!==''||l.pn!=='');if(onlyValid)L=SF.lines.filter(l=>l.id!==''&&isNum(l.q)&&Number(l.q)>0);return{inv:SF.inv,date:SF.date,lines:L,t:x.t,pay:x.pay,disc:SF.disc,user,given}}
+function showInvoice(snap,msg){const m=modal(`${msg?`<div class="noprint" style="margin-bottom:8px;color:var(--gd);font-weight:700">${esc(msg)}</div>`:''}${invoiceHTML(snap)}<div class="row noprint" style="margin-top:12px"><button id="ipr">Print / Save as PDF</button><button class="sec" id="ipd">Download PDF</button><button class="sec" id="icl">Close</button></div>`);$('#ipd',m).onclick=()=>download(invPdfName(snap),pdfInvoice(snap),'application/pdf');$('#ipr',m).onclick=()=>window.print();$('#icl',m).onclick=closeModal}
+function sfSave(){const valid=SF.lines.filter(l=>l.id!==''&&isNum(l.q)&&Number(l.q)>0);if(!valid.length){alert('No items with a valid quantity to save.');return}
+ const agg=new Map();for(const l of valid){const k=up(l.id);agg.set(k,(agg.get(k)||0)+Number(l.q))}const sm=new Map(stockList().map(s=>[s.id,s]));
+ for(const[k,q]of agg){const s=sm.get(k),on=s?s.stock:0;if(q>on){alert('Stock Alert: Not enough quantity for:\nProduct: '+(s?s.pn:'Unknown Product')+' ('+k+')\nAvailable: '+on+'\nRequested: '+q);return}}
+ const bad=SF.lines.findIndex(l=>l.err);if(bad>=0){alert('Row '+(bad+1)+' has a stock/batch error. Fix or remove it before saving.');return}
+ const snap=sfSnap(true);for(const l of valid)DB.sales.push({d:SF.date,inv:SF.inv,id:l.id,pn:l.pn,bt:lineBatch(l),q:Number(l.q),pr:isNum(l.tp)?Number(l.tp):0,u:USER.name});
+ bump();savePdfFor(snap);SF=newSF();showInvoice(snap,valid.length+' item(s) saved and stock updated successfully!');pageSales()}
+function pageSales(){SF=SF||newSF();SF.date=SF.date||todayISO();const x=sfTotals();
+ $('#view').innerHTML=`<div class="row" style="margin-bottom:10px"><button id="bSale">Sale</button><button class="sec" id="bClr">Clear Invoice Data</button><button class="sec" id="bUpd">Update The Stock</button><button class="sec" id="bFc">Filter Clear</button><button class="sec" id="bPr">Print</button></div>
+ <div class="grid2" style="grid-template-columns:minmax(0,2.2fr) minmax(280px,1fr)"><div class="card"><div class="row" style="margin-bottom:8px"><span>User Name: <b>${esc(USER.name)}</b></span><span>Invoice#: <b id="invno">${esc(SF.inv)}</b></span><span>Date: <input type="date" id="sdate" value="${SF.date}"></span></div>
+ <div class="tw" style="max-height:none"><table class="inv"><thead><tr><th style="width:36px">SN</th><th>Product ID</th><th>Product Name</th><th style="width:80px">Quantity</th><th style="width:90px">Unit Price</th><th style="width:100px">Total Price</th><th>Batch No.</th></tr></thead><tbody>
+ ${SF.lines.map((l,i)=>`<tr id="sl${i}"><td class="sn"></td><td><input data-i="${i}" data-k="id" data-dbl="id" value=""></td><td><input data-i="${i}" data-k="pn" data-dbl="pn" list="pnl" value=""></td><td><input data-i="${i}" data-k="q" type="number" step="any" min="0"></td><td><input data-i="${i}" data-k="up" data-dbl="up" type="number" step="any"></td><td class="tot"></td><td><input data-i="${i}" data-k="bt" data-dbl="bt" value=""></td></tr>`).join('')}</tbody>
+ <tfoot><tr><td colspan="5" style="text-align:right;padding:4px"><b>Total</b></td><td class="tot" id="t31"></td><td></td></tr><tr><td colspan="5" style="text-align:right;padding:4px"><b>Payable</b></td><td class="tot" id="t32"></td><td></td></tr></tfoot></table></div>
+ <div class="mut" style="margin-top:4px">Double-click Product ID / Product Name / Unit Price / Batch to pick from a list.</div>
+ <datalist id="pnl">${uniq(DB.purchases.map(p=>p.pn)).slice(0,6000).map(n=>`<option value="${esc(n)}">`).join('')}</datalist></div>
+ <div><div class="card"><h3>Calculation Summary</h3><div class="frm" style="grid-template-columns:150px 1fr"><label>In-Total Price</label><b id="t11"></b><label>Discount</label><input id="disc" type="number" step="any" value="${esc(SF.disc)}"><label>Payable Amount</label><b id="t15"></b><label>Amount Given by Customer</label><input id="given" type="number" step="any" value="${esc(SF.given)}"><label>Return to Customer</label><b id="t19"></b></div></div>
+ <div class="card"><h3>Search of name</h3><input id="ssr" value="${esc(SF.srch)}" placeholder="Generic or brand name" style="width:100%"><div class="tw" style="max-height:300px;margin-top:6px" id="sres"></div></div></div></div>
+ <div class="grid2"><div class="card"><h3>Near Expiry (${DB.settings.expDays} Days) <span class="mut">(<span id="alEc"></span>)</span></h3><input id="fE" placeholder="filter" style="width:100%;margin-bottom:4px"><div class="lst" id="alExp"></div></div>
+ <div class="card"><h3>Shortage List <span class="mut">(<span id="alSc"></span>)</span></h3><div class="mut" style="margin-bottom:4px">Color = <span class="pill" style="background:var(--lg)">Green = 0</span><span class="pill" style="background:var(--sky)">Sky = 1 to ${DB.settings.thr1}</span></div><input id="fS" placeholder="filter" style="width:100%;margin-bottom:4px"><div class="lst" id="alSh"></div></div></div>`;
+ SF.lines.forEach((_,i)=>sfRow(i));sfDrawTot();sfAlerts();sfSearch();
+ const filt=(inp,box)=>inp.oninput=()=>$$('div',box).forEach(d=>d.style.display=d.textContent.toLowerCase().includes(inp.value.toLowerCase())?'':'none');filt($('#fE'),$('#alExp'));filt($('#fS'),$('#alSh'));
+ const v=$('#view');
+ v.onchange=e=>{const t=e.target,i=t.dataset.i;if(t.id==='sdate'){SF.date=t.value;return}if(t.id==='disc'||t.id==='given')return;if(i===undefined)return;const l=SF.lines[+i],k=t.dataset.k;l[k]=t.value;
+  if(k==='pn'){sfNameChange(+i);if(isNum(l.q)&&l.q!=='')sfQtyCheck(+i)}else if(k==='q'||k==='up'){sfQtyCheck(+i)}else if(k==='bt'){}
+  SF.lines.forEach((_,j)=>sfRow(j));sfDrawTot()};
+ v.oninput=e=>{const t=e.target;if(t.id==='disc'){SF.disc=t.value;sfDrawTot()}else if(t.id==='given'){SF.given=t.value;sfDrawTot()}else if(t.id==='ssr'){SF.srch=t.value;clearTimeout(sfSearch.t);sfSearch.t=setTimeout(sfSearch,200)}};
+ v.ondblclick=async e=>{const t=e.target,i=t.dataset.i;if(!t.dataset.dbl)return;const l=SF.lines[+i],k=t.dataset.dbl;let items,title='Select One Item';
+  if(k==='id')items=uniq(DB.purchases.map(p=>p.id));else if(k==='pn')items=uniq(DB.purchases.map(p=>p.pn));else if(k==='up')items=uniq(DB.purchases.map(p=>fmt(p.up)));
+  else{items=batchesFor(l.id);if(!items.length){alert('No batches with available stock were found.');return}}
+  const r=await pick(title,items,l[k]);if(r===null)return;l[k]=r;if(k==='pn'){sfNameChange(+i);if(isNum(l.q)&&l.q!=='')sfQtyCheck(+i)}else if(k==='up'){sfQtyCheck(+i)}SF.lines.forEach((_,j)=>sfRow(j));sfDrawTot()};
+ v.onclick=e=>{const b=e.target.closest('button'),tr=e.target.closest('tr[data-pn]');
+  if(tr){const i=SF.lines.findIndex(l=>l.id===''&&l.pn==='');if(i>=0){SF.lines[i].pn=tr.dataset.pn;sfNameChange(i);SF.lines.forEach((_,j)=>sfRow(j));sfDrawTot()}return}
+  if(!b)return;
+  if(b.id==='bSale')sfSave();
+  else if(b.id==='bClr'){SF=newSF();pageSales();toast('Form has been cleared and stock summary reset successfully!')}
+  else if(b.id==='bUpd'){cache={};sfAlerts();toast('Stock summary has been updated successfully.')}
+  else if(b.id==='bFc')clearFilters();
+  else if(b.id==='bPr'){const s=sfSnap(false);if(!s.lines.length){alert('Nothing to print.');return}showInvoice(s)}}}
+
+/* ================= product return (adds stock back to the existing batch) ================= */
+let RF=null;
+const newRF=()=>({row:'',date:todayISO(),product:'',pid:'',generic:'',company:'',form:'',batch:'',exp:'',loc:'',qty:'',unit:'',total:'',reason:''});
+const rfFields=[['row','SN/Row No.','number'],['date','Return Date','date'],['product','Product Name','pick'],['pid','Product ID','pick'],['generic','Generic Name','text'],['company','Company Name','text'],['form','Dosage Form','text'],['batch','Batch No.','pick'],['exp','Exp. Date','date'],['loc','Location','text'],['qty','Return Quantity','number'],['unit','Unit Price','number'],['total','Total Price','number'],['reason','Reason / Remarks','text']];
+const rfLatest=(col,v)=>{const lv=up(v);for(let i=DB.purchases.length-1;i>=0;i--)if(up(DB.purchases[i][col])===lv)return DB.purchases[i];return null};
+function rfFromProduct(F,p){F.pid=p.id;F.product=p.pn;F.generic=p.gn;F.company=p.co;F.form=p.df;F.unit=fmt(p.up);F.batch='';F.exp='';F.loc=''}
+function rfBatchFill(F){const bt=up(F.batch);for(let i=DB.purchases.length-1;i>=0;i--){const p=DB.purchases[i];if(up(p.id)===up(F.pid)&&up(p.bt)===bt){F.exp=p.ex;F.loc=p.lo;if(F.unit==='')F.unit=fmt(p.up);return true}}return false}
+function rfCalc(F){F.total=isNum(F.qty)&&isNum(F.unit)&&F.qty!==''&&F.unit!==''?String(n2(Number(F.qty)*Number(F.unit))):''}
+function rfInfo(){const F=RF,e=$('#rfinfo');if(!e)return;e.textContent=F.pid&&F.batch!==''?'Current stock of batch '+F.batch+': '+batchStock(F.pid,F.batch)+(isNum(F.qty)&&F.qty!==''?'  →  after return: '+n2(batchStock(F.pid,F.batch)+(F.row!==''&&DB.returns[F.row-6]&&up(DB.returns[F.row-6].id)===up(F.pid)&&up(DB.returns[F.row-6].bt)===up(F.batch)?0:Number(F.qty))):''):''}
+function rfSync(){const root=$('#rf');if(!root)return;$$('input[data-k]',root).forEach(i=>i.value=RF[i.dataset.k]);$('#rf_last').textContent=DB.returns.length+6;rfInfo()}
+function rfView(){const F=RF;if(!isNum(F.row)||F.row===''){alert('Please enter a valid row number to view a record.');return}const r=Math.floor(Number(F.row));if(r<=5){alert('Invalid Row. Please enter a row number greater than 5.');return}if(r>DB.returns.length+5){alert('Record not found.\nRow '+r+' is empty. The last record is on row '+(DB.returns.length+5)+'.');return}
+ const p=DB.returns[r-6];Object.assign(F,{date:p.d,product:p.pn,pid:p.id,generic:p.gn,company:p.co,form:p.df,batch:p.bt,exp:p.ex,loc:p.lo,qty:fmt(p.q),unit:fmt(p.up),total:fmt(p.tp),reason:p.rs||''});rfSync();toast('Displaying record from row '+r+'.')}
+function rfSave(){const F=RF;if(!isoRe.test(F.date)){alert('Invalid Return Date.');return}if(!F.pid||!F.product){alert('Please select a Product (name or ID).');return}if(!isNum(F.qty)||F.qty===''||Number(F.qty)<=0){alert('Please enter a valid return quantity.');return}
+ if(!DB.purchases.some(p=>up(p.id)===up(F.pid)&&up(p.bt)===up(F.batch))){alert('Batch "'+F.batch+'" does not exist for '+F.pid+'. A return must be added to an existing batch – select the batch from the list.');return}
+ rfBatchFill(F);const rec={d:F.date,id:F.pid,co:F.company,pn:F.product,gn:F.generic,df:F.form,bt:F.batch,ex:F.exp,lo:F.loc,up:n2(F.unit),q:n2(F.qty),tp:F.total===''?n2(Number(F.qty)*Number(F.unit||0)):n2(F.total),rs:F.reason,u:USER.name};
+ if(F.row===''||Number(F.row)===0)DB.returns.push(rec);else{const r=Number(F.row);if(r<6)return;if(r-6>=DB.returns.length){alert('Record not found.');return}if(!confirm('Overwrite row '+r+'?'))return;DB.returns[r-6]=rec}
+ bump();const st=batchStock(rec.id,rec.bt);Object.assign(F,newRF());rfSync();toast('Return saved. Batch '+rec.bt+' of '+rec.pn+' now has stock '+st+'.',4000)}
+function pageReturn(){RF=RF||newRF();
+ $('#view').innerHTML=`<div class="card" id="rf" style="max-width:720px"><h3>Product Return</h3><p class="mut" style="margin-top:0">A return is added back to the stock of the selected existing batch (Stock = Purchases + Returns − Sales).</p><div class="frm"><label>User Name</label><div><b>${esc(USER.name)}</b></div><label>Last empty row</label><div id="rf_last">${DB.returns.length+6}</div>
+ ${rfFields.map(([k,l,t])=>`<label>${l}</label><div class="f"><input data-k="${k}" type="${t==='pick'?'text':t}" ${t==='number'?'step="any"':''} value="${esc(RF[k])}">${t==='pick'?`<button class="sec sm" data-pk="${k}" title="Select from list">▾</button>`:''}</div>`).join('')}</div>
+ <div id="rfinfo" style="margin:10px 0;font-weight:700;color:var(--gd)"></div><div class="row"><button data-act="save">Return (Save)</button><button class="sec" data-act="view">View Return</button><button class="sec" data-act="clear">Clear Data</button></div></div>`;rfInfo();
+ const after=k=>{const F=RF;if(k==='product'){const p=rfLatest('pn',F.product);if(p)rfFromProduct(F,p);else{F.pid='';F.batch=''}}else if(k==='pid'){const p=rfLatest('id',F.pid);if(p)rfFromProduct(F,p)}else if(k==='batch'){if(F.pid&&!rfBatchFill(F)&&F.batch!=='')toast('Batch not found for this product',3000)}
+  if(k==='qty'||k==='unit'||k==='product'||k==='pid'||k==='batch')rfCalc(F);rfSync()};
+ const v=$('#view');
+ v.onchange=e=>{const i=e.target;if(!i.dataset.k)return;RF[i.dataset.k]=i.value;after(i.dataset.k)};
+ const choose=async k=>{const F=RF;let items,map=null;if(k==='product')items=uniq(DB.purchases.map(p=>p.pn));else if(k==='pid')items=uniq(DB.purchases.map(p=>p.id));
+  else{if(!F.pid){alert('Select a product first.');return}const bs=uniq(DB.purchases.filter(p=>up(p.id)===up(F.pid)).map(p=>p.bt));if(!bs.length){alert('No batches found for this product.');return}map=new Map(bs.map(b=>[b+'   (stock: '+batchStock(F.pid,b)+')',b]));items=[...map.keys()]}
+  const r=await pick('Select One Item',items,null);if(r===null)return;F[k]=map?map.get(r)||'':r;after(k)};
+ v.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.pk)choose(b.dataset.pk);else if(b.dataset.act==='save')rfSave();else if(b.dataset.act==='view')rfView();else if(b.dataset.act==='clear'){RF=newRF();rfSync();toast('Form has been cleared and is ready for the next entry.')}};
+ v.ondblclick=e=>{const k=e.target.dataset&&e.target.dataset.k;if(['product','pid','batch'].includes(k))choose(k)}}
+function pageRTotal(){$('#view').innerHTML=`<div class="card"><h3>Returns(Total)</h3><div id="tb"></div></div>`;
+ mountTable($('#tb'),'rtotal',{name:'Returns_Total',id:x=>x.i,items:()=>DB.returns.map((r,i)=>({r,i})),actions:[{k:'e',l:'Edit'},{k:'d',l:'Delete',cls:'dng'}],
+  cols:[{h:'SN',v:x=>x.i+1,cls:'c'},{h:'Row No.',v:x=>x.i+6,cls:'c'},{h:'Return Date',v:x=>D(x.r.d),s:x=>x.r.d},{h:'Product ID',v:x=>x.r.id},{h:'Company Name',v:x=>x.r.co},{h:'Product Name',v:x=>x.r.pn},{h:'Generic Name',v:x=>x.r.gn},{h:'Dosage Form',v:x=>x.r.df},{h:'Batch',v:x=>x.r.bt},{h:'Exp. Date',v:x=>D(x.r.ex),s:x=>x.r.ex},{h:'Location',v:x=>x.r.lo},{h:'Unit Price',v:x=>fmt(x.r.up),cls:'r'},{h:'Return Quantity',v:x=>fmt(x.r.q),cls:'r'},{h:'Total Price',v:x=>fmt(x.r.tp),cls:'r'},{h:'Reason',v:x=>x.r.rs},{h:'User Info',v:x=>x.r.u}],
+  onAction:(a,i)=>{if(a==='e'){RF=RF||newRF();RF.row=String(i+6);go('return');rfView()}else if(confirm('Delete return row '+(i+6)+'? Stock will decrease accordingly.')){DB.returns.splice(i,1);bump();render()}}})}
+/* ================= admin views ================= */
+function clearFilters(){for(const k in TV){TV[k].f={};TV[k].sort=null;TV[k].page=0}render();toast('All filters have been reset successfully!')}
+const D=(x)=>fd(x);
+function editPurchase(i){PF.A=PF.A||newPF();PF.B=PF.B||newPF();PF.A.row=String(i+6);go('purchase');pfView('A')}
+function pagePTotal(){$('#view').innerHTML=`<div class="card"><h3>Purchases(Total)</h3><div class="row" style="margin-bottom:6px"><button id="rea">Re-Arrange ID's</button><span class="mut">Sorted by Product ID; SN re-numbered. Row No. = SN + 5 (used in the entry form).</span></div><div id="tb"></div></div>`;
+ $('#rea').onclick=()=>{reArrange();render();toast('Done! Your sheet is now sorted and sequential.')};
+ mountTable($('#tb'),'ptotal',{name:'Purchases_Total',id:x=>x.i,items:()=>DB.purchases.map((r,i)=>({r,i})),actions:[{k:'e',l:'Edit'},{k:'d',l:'Delete',cls:'dng'}],
+  cols:[{h:'SN',v:x=>x.i+1,cls:'c'},{h:'Row No.',v:x=>x.i+6,cls:'c'},{h:'Purchase Date',v:x=>D(x.r.d),s:x=>x.r.d},{h:'Product ID',v:x=>x.r.id},{h:'Company Name',v:x=>x.r.co},{h:'Product Name',v:x=>x.r.pn},{h:'Generic Name',v:x=>x.r.gn},{h:'Dosage Form',v:x=>x.r.df},{h:'Batch',v:x=>x.r.bt},{h:'Exp. Date',v:x=>D(x.r.ex),s:x=>x.r.ex},{h:'Location',v:x=>x.r.lo},{h:'Price/Box',v:x=>fmt(x.r.bx),cls:'r'},{h:'Unit Price',v:x=>fmt(x.r.up),cls:'r'},{h:'Purchases Quantity',v:x=>fmt(x.r.q),cls:'r'},{h:'Buying Price',v:x=>fmt(x.r.tp),cls:'r'},{h:'User Info',v:x=>x.r.u}],
+  onAction:(a,i)=>{if(a==='e')editPurchase(i);else if(confirm('Delete purchase row '+(i+6)+'? This cannot be undone.')){DB.purchases.splice(i,1);bump();render()}}})}
+function pageSTotal(){$('#view').innerHTML=`<div class="card"><h3>Sales(Total)</h3><div id="tb"></div></div>`;
+ mountTable($('#tb'),'stotal',{name:'Sales_Total',id:x=>x.i,items:()=>DB.sales.map((r,i)=>({r,i})),actions:[{k:'e',l:'Edit'},{k:'d',l:'Delete',cls:'dng'}],
+  cols:[{h:'SN',v:x=>x.i+1,cls:'c'},{h:'Sale Date',v:x=>D(x.r.d),s:x=>x.r.d},{h:'Invoice #',v:x=>x.r.inv},{h:'Product ID',v:x=>x.r.id},{h:'Product Name',v:x=>x.r.pn},{h:'Batch',v:x=>x.r.bt},{h:'Sale Quantity',v:x=>fmt(x.r.q),cls:'r'},{h:'Price',v:x=>fmt(x.r.pr),cls:'r'},{h:'User Info',v:x=>x.r.u}],
+  onAction:(a,i)=>{const r=DB.sales[i];if(a==='d'){if(confirm('Delete sales row '+(i+1)+'?')){DB.sales.splice(i,1);bump();render()}return}
+   const m=modal(`<h3>Edit sale row ${i+1}</h3><div class="frm">${[['d','Sale Date','date'],['inv','Invoice #','text'],['id','Product ID','text'],['pn','Product Name','text'],['bt','Batch','text'],['q','Quantity','number'],['pr','Price','number'],['u','User Info','text']].map(([k,l,t])=>`<label>${l}</label><input data-k="${k}" type="${t}" step="any" value="${esc(r[k])}">`).join('')}</div><div class="row" style="margin-top:12px"><button id="ok">Save</button><button class="sec" id="cn">Cancel</button></div>`);
+   $('#cn',m).onclick=closeModal;$('#ok',m).onclick=()=>{$$('input[data-k]',m).forEach(inp=>{const k=inp.dataset.k;r[k]=(k==='q'||k==='pr')?Number(inp.value)||0:inp.value});bump();closeModal();render()}}})}
+function pageStock(){$('#view').innerHTML=`<div class="card"><h3>Stock_Summary</h3><div id="tb"></div></div>`;
+ mountTable($('#tb'),'stock',{name:'Stock_Summary',id:x=>0,items:()=>stockList().map((r,i)=>({r,i})),extra:'<button class="sm" data-x="upd" onclick="cache={};render();toast(\'Stock summary has been updated successfully.\')">Update The Stock</button>',
+  cols:[{h:'S.N.',v:x=>x.i+1,cls:'c'},{h:'Product ID',v:x=>x.r.id},{h:'Company Name',v:x=>x.r.co},{h:'Product Name',v:x=>x.r.pn},{h:'Generic Name',v:x=>x.r.gn},{h:'Dosage Form',v:x=>x.r.df},{h:'Purchase Qty',v:x=>fmt(x.r.pq),cls:'c'},{h:'Return Qty',v:x=>fmt(x.r.rq),cls:'c'},{h:'Sold Qty',v:x=>fmt(x.r.sq),cls:'c'},{h:'Total Stock in Hand',v:x=>fmt(x.r.stock),cls:'c'}]})}
+const HV={sheet:'Purchases(Total)',from:todayISO().slice(0,8)+'01',to:todayISO(),rows:null};
+function pageHistory(){$('#view').innerHTML=`<div class="card"><h3>History_View</h3><div class="row" style="margin-bottom:8px"><label>Sheet Name <select id="hs"><option>Purchases(Total)</option><option>Sales(Total)</option><option>Returns(Total)</option></select></label><label>Date-01 <input type="date" id="hf" value="${HV.from}"></label><label>Date-02 <input type="date" id="ht" value="${HV.to}"></label><button id="hshow">Show History</button><button class="sec" id="hclr">Clear Data</button></div><div id="tb"></div></div>`;$('#hs').value=HV.sheet;
+ $('#hclr').onclick=()=>{HV.rows=null;$('#tb').innerHTML=''};
+ const fetchH=()=>{HV.sheet=$('#hs').value;HV.from=$('#hf').value;HV.to=$('#ht').value;if(!HV.sheet){alert('Error: Please select a Sheet Name in cell B3.');return}if(!HV.from||!HV.to){alert('Error: Please enter valid start and end dates in C3 and D3.');return}
+  const src=HV.sheet==='Purchases(Total)'?DB.purchases:HV.sheet==='Returns(Total)'?DB.returns:DB.sales;if(!src.length){alert('No data found on the \''+HV.sheet+'\' sheet to process.');return}
+  HV.rows=src.map((r,i)=>({r,i})).filter(x=>x.r.d>=HV.from&&x.r.d<=HV.to);TV.hist=null;
+  const P=HV.sheet==='Purchases(Total)',R=HV.sheet==='Returns(Total)';
+  mountTable($('#tb'),'hist',{name:'History_'+HV.sheet,id:x=>0,items:()=>HV.rows,cols:R?[{h:'SN',v:x=>x.i+1,cls:'c'},{h:'Return Date',v:x=>D(x.r.d),s:x=>x.r.d},{h:'Product ID',v:x=>x.r.id},{h:'Company Name',v:x=>x.r.co},{h:'Product Name',v:x=>x.r.pn},{h:'Generic Name',v:x=>x.r.gn},{h:'Dosage Form',v:x=>x.r.df},{h:'Batch',v:x=>x.r.bt},{h:'Exp. Date',v:x=>D(x.r.ex),s:x=>x.r.ex},{h:'Location',v:x=>x.r.lo},{h:'Unit Price',v:x=>fmt(x.r.up)},{h:'Return Quantity',v:x=>fmt(x.r.q)},{h:'Total Price',v:x=>fmt(x.r.tp)},{h:'Reason',v:x=>x.r.rs}]:P?[{h:'SN',v:x=>x.i+1,cls:'c'},{h:'Purchase Date',v:x=>D(x.r.d),s:x=>x.r.d},{h:'Product ID',v:x=>x.r.id},{h:'Company Name',v:x=>x.r.co},{h:'Product Name',v:x=>x.r.pn},{h:'Generic Name',v:x=>x.r.gn},{h:'Dosage Form',v:x=>x.r.df},{h:'Batch',v:x=>x.r.bt},{h:'Exp. Date',v:x=>D(x.r.ex),s:x=>x.r.ex},{h:'Location',v:x=>x.r.lo},{h:'Price/Box',v:x=>fmt(x.r.bx)},{h:'Unit Price',v:x=>fmt(x.r.up)},{h:'Purchases Quantity',v:x=>fmt(x.r.q)}]
+   :[{h:'SN',v:x=>x.i+1,cls:'c'},{h:'Sale Date',v:x=>D(x.r.d),s:x=>x.r.d},{h:'Invoice #',v:x=>x.r.inv},{h:'Product ID',v:x=>x.r.id},{h:'Product Name',v:x=>x.r.pn},{h:'Batch',v:x=>x.r.bt},{h:'Sale Quantity',v:x=>fmt(x.r.q)},{h:'Price',v:x=>fmt(x.r.pr)}]})};
+ $('#hshow').onclick=fetchH;if(HV.rows)fetchH()}
+function searchRows(kw){const k=kw.toLowerCase(),has=a=>a.some(v=>String(v??'').toLowerCase().includes(k)),out=[];const dv=d=>[d,fd(d)];
+ DB.purchases.forEach(p=>{if(has([...dv(p.d),p.id,p.co,p.pn,p.gn,p.df,p.bt,...dv(p.ex),p.lo,p.bx,p.up,p.q]))out.push([p.d.slice(0,4),'Purchases(Total)',fd(p.d),p.id,p.co,p.pn,p.gn,p.df,p.bt,fd(p.ex),p.lo,fmt(p.bx),fmt(p.up),fmt(p.q),'-','-',p.u||'-'])});
+ DB.returns.forEach(p=>{if(has([...dv(p.d),p.id,p.co,p.pn,p.gn,p.df,p.bt,...dv(p.ex),p.lo,p.up,p.q,p.rs]))out.push([p.d.slice(0,4),'Returns(Total)',fd(p.d),p.id,p.co,p.pn,p.gn,p.df,p.bt,fd(p.ex),p.lo,'-',fmt(p.up),fmt(p.q),'-','-',p.u||'-'])});
+ DB.sales.forEach(s=>{if(has([...dv(s.d),s.inv,s.id,s.pn,s.bt,s.q,s.pr]))out.push([s.d.slice(0,4),'Sales(Total)',fd(s.d),s.id,'-',s.pn,'-','-',s.bt,'-','-','-',fmt(s.pr),fmt(s.q),fmt(s.q),'-',s.u||'-'])});
+ stockList().forEach(s=>{if(has([s.id,s.co,s.pn,s.gn,s.df,s.pq,s.rq,s.sq,s.stock]))out.push(['-','Stock_Summary','-',s.id,s.co,s.pn,s.gn,s.df,'-','-','-','-','-',fmt(s.pq),fmt(s.sq),fmt(s.stock),'-'])});return out}
+let SK='';
+function pageSearch(){$('#view').innerHTML=`<div class="card"><h3>Search</h3><input id="kw" placeholder="Search in Purchases, Sales and Stock…" value="${esc(SK)}" style="width:min(520px,100%)"><div id="tb" style="margin-top:8px"></div></div>`;
+ const run=()=>{SK=$('#kw').value;TV.srch=null;if(!SK.trim()){$('#tb').innerHTML='';return}const R=searchRows(SK.trim()).map((r,i)=>[i+1,...r]);
+  mountTable($('#tb'),'srch',{name:'Search',pageSize:200,id:x=>0,items:()=>R,cols:['SN','Year','Sheet Name','Date','Product ID','Company Name','Product Name','Generic Name','Dosage Form','Batch No.','Exp. Date','Location','Price/Box','Unit Price','Quantity','Sold Qty','Balance','User Info'].map((h,i)=>({h,v:x=>x[i]}))})};
+ $('#kw').oninput=()=>{clearTimeout(run.t);run.t=setTimeout(run,300)};if(SK)run();$('#kw').focus()}
+function pageUsers(){const draw=()=>{$('#view').innerHTML=`<div class="card"><h3>User Settings</h3>${(DB.resets||[]).length?`<div class="card" style="background:#fff6d6;color:#3a2e00"><b>Password reset requests:</b> ${DB.resets.map(x=>esc(x.name)+' <span class="mut">('+new Date(x.t).toLocaleString()+')</span>').join(' · ')}</div>`:''}<table><thead><tr><th>SN</th><th>Name</th><th>Password</th><th>Remarks (must change password at next login)</th><th>Action</th></tr></thead><tbody>${DB.users.map((u,i)=>`<tr><td class="c">${i+1}</td><td>${esc(u.name)}</td><td class="c">••••••</td><td class="c">${u.chg?'Yes':'No'}</td><td><button class="sm sec" data-a="pw" data-i="${i}">Set password</button> <button class="sm sec" data-a="rm" data-i="${i}">Toggle remarks</button> ${u.name==='Admin'?'':`<button class="sm" data-a="rp" data-i="${i}">Reset password</button> <button class="sm dng" data-a="del" data-i="${i}">Delete</button>`}</td></tr>`).join('')}</tbody></table>
+  <h3 style="margin-top:14px">Add user</h3><div class="row"><input id="nu" placeholder="User name"><input id="np" placeholder="Password" type="password"><label><input type="checkbox" id="nc" checked> must change password at first login</label><button id="add">Add</button></div></div>`;
+  $('#view').onclick=async e=>{const b=e.target.closest('button');if(!b)return;const i=+b.dataset.i;
+   if(b.id==='add'){const n=$('#nu').value.trim(),p=$('#np').value;if(!n||!p){alert('Enter both name and password.');return}if(DB.users.some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('User already exists.');return}DB.users.push({name:n,pw:hashPw(n,p),chg:$('#nc').checked});bump();draw();toast('User added.')}
+   else if(b.dataset.a==='pw'){const p=prompt('New password for '+DB.users[i].name);if(p){DB.users[i].pw=hashPw(DB.users[i].name,p);if(DB.users[i].name==='Admin')DB.xl=makeXl(p,DB.users[i].pw);bump();toast('Password updated.'+(DB.users[i].name==='Admin'?' The Excel backup is now protected with the new password.':''))}}
+   else if(b.dataset.a==='rp'){const u=DB.users[i],t=tmpPw();if(!confirm('Reset the password of '+u.name+'?'))return;u.pw=hashPw(u.name,t);u.chg=true;DB.resets=(DB.resets||[]).filter(x=>x.name!==u.name);bump();const m=modal(`<h3>Temporary password</h3><p>Give this to <b>${esc(u.name)}</b>. They must choose a new password at their next login.</p><div style="font:700 22px monospace;text-align:center;padding:12px;border:2px dashed var(--gd);border-radius:8px;user-select:all">${t}</div><div class="row" style="margin-top:12px"><button id="tok">OK</button></div>`);m.dataset.lock=1;$('#tok',m).onclick=()=>{closeModal();draw()}}
+   else if(b.dataset.a==='rm'){DB.users[i].chg=!DB.users[i].chg;bump();draw()}
+   else if(b.dataset.a==='del'){if(confirm('Delete user '+DB.users[i].name+'?')){DB.users.splice(i,1);bump();draw()}}}};
+ if(!confirm("You are about to open the 'User' settings.\n\nAre you sure you want to proceed?")){go('sales');return}draw()}
+function pageSettings(){const S=DB.settings;$('#view').innerHTML=`<div class="card"><h3>Settings</h3><div class="frm" style="grid-template-columns:230px 1fr"><label>Shop / invoice title</label><input id="s1" value="${esc(S.shop)}"><label>Near-expiry window (days)</label><input id="s2" type="number" value="${S.expDays}"><label>Shortage threshold – Dosage Form-01</label><input id="s3" type="number" value="${S.thr1}"><label>Dosage Form-01 (one per line)</label><textarea id="s4" rows="6">${esc(S.cat1.join('\n'))}</textarea><label>Shortage threshold – Dosage Form-02</label><input id="s5" type="number" value="${S.thr2}"><label>Dosage Form-02 (one per line)</label><textarea id="s6" rows="5">${esc(S.cat2.join('\n'))}</textarea></div><div style="margin-top:8px"><button id="ssv">Save settings</button></div></div>
+ <div class="card"><h3>Admin recovery code</h3><p class="mut" style="margin-top:0">Used on the login page (“Forgot password?”) to reset the Admin password. ${DB.recovery?'A code is set.':'No code is set.'}</p><button id="rcg">Generate a new recovery code</button></div>
+ <div class="card"><h3>Backup / restore</h3><p class="mut">All data is kept in this browser (IndexedDB). Download a backup regularly and keep it safe.</p><div class="row"><button id="bk">Download backup (.json)</button><label class="mut">Restore: <input type="file" id="rs" accept=".json"></label><button class="dng" id="rst">Reset to original workbook data</button></div></div>`;
+ $('#ssv').onclick=()=>{const g=i=>$('#'+i).value.split('\n').map(s=>s.trim()).filter(Boolean);Object.assign(S,{shop:$('#s1').value,expDays:+$('#s2').value||30,thr1:+$('#s3').value,thr2:+$('#s5').value,cat1:g('s4'),cat2:g('s6')});bump();$('#brand').textContent=S.shop;toast('Settings saved.')};
+ $('#rcg').onclick=async()=>{if(confirm('Generate a new recovery code? The old one will stop working.'))await newRecovery()};
+ $('#bk').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(DB)],{type:'application/json'}));a.download='K_Pharma_backup_'+todayISO()+'.json';a.click()};
+ $('#rs').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!d.purchases||!d.sales||!d.users)throw 0;if(!confirm('Replace ALL current data with this backup?'))return;DB=fixDB(d);bump();toast('Backup restored.');render()}catch{alert('Invalid backup file.')}};
+ $('#rst').onclick=async()=>{if(!confirm('Reset ALL data (including users) to the original workbook data? Current data will be lost.'))return;DB=await loadSeed();bump();PF.A=PF.B=SF=null;toast('Reset done.');render()}}
+/* ================= backup: Excel + PDF + local folder + GitHub ================= */
+const XLSX_NAME='K_Pharma_Backup.xlsx';
+const CRCT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+const crc32=b=>{let c=~0;for(let i=0;i<b.length;i++)c=CRCT[(c^b[i])&255]^(c>>>8);return(~c)>>>0};
+async function deflateRaw(b){if(typeof CompressionStream==='undefined')return null;try{return new Uint8Array(await new Response(new Blob([b]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer())}catch{return null}}
+async function inflateRaw(b){return new Uint8Array(await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer())}
+async function zipFiles(files){const enc=new TextEncoder(),ch=[],cd=[];let off=0;
+ for(const f of files){const nm=enc.encode(f.name),crc=crc32(f.data);let comp=await deflateRaw(f.data),m=8;if(!comp||comp.length>=f.data.length){comp=f.data;m=0}
+  const h=new DataView(new ArrayBuffer(30));h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(8,m,true);h.setUint16(12,0x21,true);h.setUint32(14,crc,true);h.setUint32(18,comp.length,true);h.setUint32(22,f.data.length,true);h.setUint16(26,nm.length,true);ch.push(new Uint8Array(h.buffer),nm,comp);
+  const c=new DataView(new ArrayBuffer(46));c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(10,m,true);c.setUint16(14,0x21,true);c.setUint32(16,crc,true);c.setUint32(20,comp.length,true);c.setUint32(24,f.data.length,true);c.setUint16(28,nm.length,true);c.setUint32(42,off,true);cd.push(new Uint8Array(c.buffer),nm);off+=30+nm.length+comp.length}
+ let cs=0;cd.forEach(x=>cs+=x.length);const e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cs,true);e.setUint32(16,off,true);
+ return new Uint8Array(await new Blob([...ch,...cd,new Uint8Array(e.buffer)]).arrayBuffer())}
+async function unzipBuf(buf){const u=new Uint8Array(buf),dv=new DataView(u.buffer,u.byteOffset,u.byteLength);let e=u.length-22;while(e>=0&&dv.getUint32(e,true)!==0x06054b50)e--;if(e<0)throw new Error('Not a zip');const n=dv.getUint16(e+10,true);let p=dv.getUint32(e+16,true);const out={},dec=new TextDecoder();
+ for(let i=0;i<n;i++){const m=dv.getUint16(p+10,true),cs=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),el=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),lo=dv.getUint32(p+42,true),name=dec.decode(u.subarray(p+46,p+46+nl));const ds=lo+30+dv.getUint16(lo+26,true)+dv.getUint16(lo+28,true),raw=u.subarray(ds,ds+cs);out[name]=m===8?await inflateRaw(raw):raw;p+=46+nl+el+cl}return out}
+const colL=i=>{let s='';i++;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26)}return s};
+const xe=s=>String(s).replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g,'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const serial=iso=>{const[y,m,d]=iso.split('-').map(Number);return Math.round((Date.UTC(y,m-1,d)-Date.UTC(1899,11,30))/864e5)};
+const fromSerial=n=>new Date(Date.UTC(1899,11,30)+Math.round(n)*864e5).toISOString().slice(0,10);
+function sheetXml(sh,stamp){const nc=sh.head.length,last=sh.rows.length+5;let x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="5" topLeftCell="A6" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/><cols>'+sh.w.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')+'</cols><sheetData>';
+ x+=`<row r="1"><c r="A1" s="3" t="inlineStr"><is><t>${xe(sh.name)}</t></is></c></row><row r="2"><c r="A2" t="inlineStr"><is><t>${xe('Last updated: '+stamp)}</t></is></c></row>`;
+ x+='<row r="5">'+sh.head.map((h,i)=>`<c r="${colL(i)}5" s="1" t="inlineStr"><is><t>${xe(h)}</t></is></c>`).join('')+'</row>';
+ sh.rows.forEach((r,ri)=>{const rn=ri+6;x+=`<row r="${rn}">`;r.forEach((v,ci)=>{if(v===''||v==null)return;const a=colL(ci)+rn;if(typeof v==='number')x+=`<c r="${a}"><v>${v}</v></c>`;else if(typeof v==='object')x+=`<c r="${a}" s="2"><v>${serial(v.d)}</v></c>`;else x+=`<c r="${a}" t="inlineStr"><is><t xml:space="preserve">${xe(v)}</t></is></c>`});x+='</row>'});
+ return x+`</sheetData><autoFilter ref="A5:${colL(nc-1)}${Math.max(last,5)}"/></worksheet>`}
+async function buildXlsxPlain(){const stamp=new Date().toLocaleString();const Dt=iso=>isoRe.test(iso||'')&&+iso.slice(0,4)>=1900&&+iso.slice(0,4)<=9999?{d:iso}:(iso||'');
+ const sheets=[
+ {name:'Purchases(Total)',head:['SN','Purchase Date','Product ID','Company Name','Product Name','Generic Name','Dosage Form','Batch','Exp. Date','Location','Price/Box','Unit Price','Purchases Quantity','Buying Price','User Info'],w:[6,13,12,22,28,26,14,14,13,14,11,10,12,12,12],rows:DB.purchases.map((p,i)=>[i+1,Dt(p.d),p.id,p.co,p.pn,p.gn,p.df,p.bt,Dt(p.ex),p.lo,p.bx,p.up,p.q,p.tp,p.u])},
+ {name:'Sales(Total)',head:['SN','Sale Date','Invoice #','Product ID','Product Name','Batch','Sale Quantity','Price','','User Info'],w:[6,13,13,12,28,14,12,10,4,12],rows:DB.sales.map((s,i)=>[i+1,Dt(s.d),s.inv,s.id,s.pn,s.bt,s.q,s.pr,'',s.u])},
+ {name:'Returns(Total)',head:['SN','Return Date','Product ID','Company Name','Product Name','Generic Name','Dosage Form','Batch','Exp. Date','Location','Unit Price','Return Quantity','Total Price','Reason','User Info'],w:[6,13,12,22,28,26,14,14,13,14,10,12,12,20,12],rows:DB.returns.map((p,i)=>[i+1,Dt(p.d),p.id,p.co,p.pn,p.gn,p.df,p.bt,Dt(p.ex),p.lo,p.up,p.q,p.tp,p.rs||'',p.u])},
+ {name:'Stock_Summary',head:['S.N.','Product ID','Company Name','Product Name','Generic Name','Dosage Form','Purchase Qty','Return Qty','Sold Qty','Total Stock in Hand'],w:[6,12,22,28,26,14,12,11,10,16],rows:stockList().map((s,i)=>[i+1,s.id,s.co,s.pn,s.gn,s.df,s.pq,s.rq,s.sq,s.stock])}];
+ const H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',NS='xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"',enc=new TextEncoder(),f=(n,s)=>({name:n,data:enc.encode(s)});
+ const files=[f('[Content_Types].xml',H+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+sheets.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')+'</Types>'),
+ f('_rels/.rels',H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'),
+ f('xl/workbook.xml',H+`<workbook ${NS} xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>`+sheets.map((s,i)=>`<sheet name="${xe(s.name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')+'</sheets><definedNames>'+sheets.map((s,i)=>`<definedName name="_xlnm._FilterDatabase" localSheetId="${i}" hidden="1">'${xe(s.name)}'!$A$5:$${colL(s.head.length-1)}$${Math.max(s.rows.length+5,5)}</definedName>`).join('')+'</definedNames></workbook>'),
+ f('xl/_rels/workbook.xml.rels',H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sheets.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')+`<Relationship Id="rId${sheets.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`),
+ f('xl/styles.xml',H+`<styleSheet ${NS}><numFmts count="1"><numFmt numFmtId="164" formatCode="dd/mm/yyyy"/></numFmts><fonts count="3"><font><sz val="10"/><name val="Arial"/></font><font><b/><sz val="10"/><name val="Arial"/></font><font><b/><sz val="12"/><name val="Arial"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF5DFF5D"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color auto="1"/></left><right style="thin"><color auto="1"/></right><top style="thin"><color auto="1"/></top><bottom style="thin"><color auto="1"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="center"/></xf><xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs></styleSheet>`)];
+ sheets.forEach((s,i)=>files.push(f(`xl/worksheets/sheet${i+1}.xml`,sheetXml(s,stamp))));return zipFiles(files)}
+async function importXlsxPlain(buf){const z=await unzipBuf(buf),dec=new TextDecoder(),dp=new DOMParser(),get=n=>z[n]?dp.parseFromString(dec.decode(z[n]),'text/xml'):null;
+ const wb=get('xl/workbook.xml'),rels=get('xl/_rels/workbook.xml.rels');if(!wb||!rels)throw new Error('Not an Excel backup');const tgt={};[...rels.getElementsByTagName('Relationship')].forEach(r=>tgt[r.getAttribute('Id')]=r.getAttribute('Target'));
+ const out={};for(const s of wb.getElementsByTagName('sheet')){const rid=s.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id')||s.getAttribute('r:id');const doc=get('xl/'+String(tgt[rid]).replace(/^\/?(xl\/)?/,''));if(!doc)continue;const rows=[];
+  for(const r of doc.getElementsByTagName('row')){const rn=+r.getAttribute('r');if(rn<6)continue;const arr=[];for(const c of r.getElementsByTagName('c')){const m=/^([A-Z]+)/.exec(c.getAttribute('r'));let ci=0;for(const ch of m[1])ci=ci*26+ch.charCodeAt(0)-64;ci--;const t=c.getAttribute('t');let v='';if(t==='inlineStr'){v=[...c.getElementsByTagName('t')].map(x=>x.textContent).join('')}else{const ve=c.getElementsByTagName('v')[0];v=ve?ve.textContent:'';if(t==='s')v='';else if(t==='str')v=v;else if(v!==''){v=Number(v);if(c.getAttribute('s')==='2')v=fromSerial(v)}}arr[ci]=v}rows.push(arr)}
+  out[s.getAttribute('name')]=rows}
+ const S=(r,i)=>r[i]==null?'':String(r[i]),N=(r,i)=>Number(r[i])||0,I=(r,i)=>/^\d{4}-\d\d-\d\d$/.test(S(r,i))?S(r,i):S(r,i);
+ const P=(out['Purchases(Total)']||[]).filter(r=>S(r,2)||S(r,1)).map(r=>({d:S(r,1),id:S(r,2),co:S(r,3),pn:S(r,4),gn:S(r,5),df:S(r,6),bt:S(r,7),ex:S(r,8),lo:S(r,9),bx:N(r,10),up:N(r,11),q:N(r,12),tp:N(r,13),u:S(r,14)}));
+ const Sa=(out['Sales(Total)']||[]).filter(r=>S(r,3)||S(r,1)).map(r=>({d:S(r,1),inv:S(r,2),id:S(r,3),pn:S(r,4),bt:S(r,5),q:N(r,6),pr:N(r,7),u:S(r,9)}));
+ const R=(out['Returns(Total)']||[]).filter(r=>S(r,2)||S(r,1)).map(r=>({d:S(r,1),id:S(r,2),co:S(r,3),pn:S(r,4),gn:S(r,5),df:S(r,6),bt:S(r,7),ex:S(r,8),lo:S(r,9),up:N(r,10),q:N(r,11),tp:N(r,12),rs:S(r,13),u:S(r,14)}));
+ if(!out['Purchases(Total)']&&!out['Sales(Total)'])throw new Error('Not a K Pharma backup');return{purchases:P,sales:Sa,returns:R}}
+/* ---- Excel open-password (Office "Standard" AES-128 encryption, pure JS) ---- */
+const AESX=(()=>{const sb=new Uint8Array(256),isb=new Uint8Array(256);let p=1,q=1;const rl=(x,n)=>((x<<n)|(x>>(8-n)))&255;
+ do{p=(p^((p<<1)&255)^((p&0x80)?0x1b:0))&255;q=(q^(q<<1))&255;q=(q^(q<<2))&255;q=(q^(q<<4))&255;if(q&0x80)q^=0x09;const x=q^rl(q,1)^rl(q,2)^rl(q,3)^rl(q,4);sb[p]=(x^0x63)&255}while(p!==1);sb[0]=0x63;for(let i=0;i<256;i++)isb[sb[i]]=i;
+ const xt=a=>((a<<1)^((a&0x80)?0x1b:0))&255,mul=(a,b)=>{let r=0;while(b){if(b&1)r^=a;a=xt(a);b>>=1}return r};
+ function expand(key){const w=new Uint8Array(176);w.set(key);let rc=1;for(let i=16;i<176;i+=4){let t=[w[i-4],w[i-3],w[i-2],w[i-1]];if(i%16===0){t=[sb[t[1]]^rc,sb[t[2]],sb[t[3]],sb[t[0]]];rc=xt(rc)}for(let k=0;k<4;k++)w[i+k]=w[i-16+k]^t[k]}return w}
+ function enc(w,b,o){const s=new Uint8Array(16);for(let i=0;i<16;i++)s[i]=b[o+i]^w[i];for(let r=1;r<=10;r++){const t=new Uint8Array(16);for(let c=0;c<4;c++)for(let k=0;k<4;k++)t[c*4+k]=sb[s[((c+k)%4)*4+k]];
+  if(r<10){for(let c=0;c<4;c++){const a0=t[c*4],a1=t[c*4+1],a2=t[c*4+2],a3=t[c*4+3];s[c*4]=xt(a0)^xt(a1)^a1^a2^a3;s[c*4+1]=a0^xt(a1)^xt(a2)^a2^a3;s[c*4+2]=a0^a1^xt(a2)^xt(a3)^a3;s[c*4+3]=xt(a0)^a0^a1^a2^xt(a3)}}else s.set(t);for(let i=0;i<16;i++)s[i]^=w[r*16+i]}return s}
+ function dec(w,b,o){let s=new Uint8Array(16);for(let i=0;i<16;i++)s[i]=b[o+i]^w[160+i];for(let r=9;r>=0;r--){const t=new Uint8Array(16);for(let c=0;c<4;c++)for(let k=0;k<4;k++)t[((c+k)%4)*4+k]=s[c*4+k];for(let i=0;i<16;i++)t[i]=isb[t[i]]^w[r*16+i];
+  if(r>0){for(let c=0;c<4;c++){const a0=t[c*4],a1=t[c*4+1],a2=t[c*4+2],a3=t[c*4+3];s[c*4]=mul(a0,14)^mul(a1,11)^mul(a2,13)^mul(a3,9);s[c*4+1]=mul(a0,9)^mul(a1,14)^mul(a2,11)^mul(a3,13);s[c*4+2]=mul(a0,13)^mul(a1,9)^mul(a2,14)^mul(a3,11);s[c*4+3]=mul(a0,11)^mul(a1,13)^mul(a2,9)^mul(a3,14)}}else s=t}return s}
+ return{ecb(key,data,d){const w=expand(key),o=new Uint8Array(data.length);for(let i=0;i<data.length;i+=16)o.set(d?dec(w,data,i):enc(w,data,i),i);return o}}})();
+function sha1(m){const l=m.length,n=((l+9+63)>>6)<<6,b=new Uint8Array(n);b.set(m);b[l]=0x80;const dv=new DataView(b.buffer);dv.setUint32(n-4,(l*8)>>>0);dv.setUint32(n-8,Math.floor(l*8/4294967296));let h0=0x67452301,h1=0xEFCDAB89|0,h2=0x98BADCFE|0,h3=0x10325476,h4=0xC3D2E1F0|0;const w=new Int32Array(80);
+ for(let o=0;o<n;o+=64){for(let i=0;i<16;i++)w[i]=dv.getInt32(o+i*4);for(let i=16;i<80;i++){const x=w[i-3]^w[i-8]^w[i-14]^w[i-16];w[i]=(x<<1)|(x>>>31)}let a=h0,bb=h1,c=h2,d=h3,e=h4;
+  for(let i=0;i<80;i++){let f,k;if(i<20){f=(bb&c)|(~bb&d);k=0x5A827999}else if(i<40){f=bb^c^d;k=0x6ED9EBA1}else if(i<60){f=(bb&c)|(bb&d)|(c&d);k=0x8F1BBCDC|0}else{f=bb^c^d;k=0xCA62C1D6|0}const t=(((a<<5)|(a>>>27))+f+e+k+w[i])|0;e=d;d=c;c=(bb<<30)|(bb>>>2);bb=a;a=t}
+  h0=(h0+a)|0;h1=(h1+bb)|0;h2=(h2+c)|0;h3=(h3+d)|0;h4=(h4+e)|0}const o=new Uint8Array(20),ov=new DataView(o.buffer);[h0,h1,h2,h3,h4].forEach((v,i)=>ov.setInt32(i*4,v));return o}
+const catU=(...a)=>{const o=new Uint8Array(a.reduce((s,x)=>s+x.length,0));let p=0;for(const x of a){o.set(x,p);p+=x.length}return o};
+const le32=n=>{const o=new Uint8Array(4);new DataView(o.buffer).setUint32(0,n>>>0,true);return o};
+const u16=s=>{const o=new Uint8Array(s.length*2);for(let i=0;i<s.length;i++){o[i*2]=s.charCodeAt(i)&255;o[i*2+1]=s.charCodeAt(i)>>8}return o};
+const hex=u=>[...u].map(x=>pad(x.toString(16),2)).join(''),unhex=s=>Uint8Array.from(s.match(/../g)||[],x=>parseInt(x,16));
+function stdKey(pw,salt){let h=sha1(catU(salt,u16(pw)));for(let i=0;i<50000;i++)h=sha1(catU(le32(i),h));const hf=sha1(catU(h,le32(0))),b1=new Uint8Array(64).fill(0x36),b2=new Uint8Array(64).fill(0x5c);for(let i=0;i<20;i++){b1[i]^=hf[i];b2[i]^=hf[i]}return catU(sha1(b1),sha1(b2)).slice(0,16)}
+function makeXl(pw,ph){const salt=crypto.getRandomValues(new Uint8Array(16)),ver=crypto.getRandomValues(new Uint8Array(16)),key=stdKey(pw,salt);const vh=new Uint8Array(32);vh.set(sha1(ver));
+ return{salt:hex(salt),key:hex(key),ev:hex(AESX.ecb(key,ver)),evh:hex(AESX.ecb(key,vh)),ph}}
+function encInfo(xl){const csp=catU(u16('Microsoft Enhanced RSA and AES Cryptographic Provider'),new Uint8Array(2));const hdr=catU(le32(0x24),le32(0),le32(0x660E),le32(0x8004),le32(128),le32(0x18),le32(0),le32(0),csp);
+ return catU(new Uint8Array([3,0,2,0]),le32(0x24),le32(hdr.length),hdr,le32(16),unhex(xl.salt),unhex(xl.ev),le32(20),unhex(xl.evh))}
+function cfbWrite(info,pkg){const SS=512,MS=64,mn=Math.ceil(info.length/MS),mini=new Uint8Array(mn*MS);mini.set(info);const mcN=Math.ceil(mini.length/SS),pkN=Math.ceil(pkg.length/SS);let nf=1;for(;;){const need=Math.ceil((nf+2+mcN+pkN)/128);if(need<=nf)break;nf=need}
+ if(nf>109)throw new Error('Backup is too large to password-protect');const dS=nf,mfS=nf+1,mcS=nf+2,pkS=nf+2+mcN,total=pkS+pkN,END=0xFFFFFFFE,FREE=0xFFFFFFFF;
+ const fat=new Uint32Array(nf*128).fill(FREE);for(let i=0;i<nf;i++)fat[i]=0xFFFFFFFD;fat[dS]=END;fat[mfS]=END;for(let i=0;i<mcN;i++)fat[mcS+i]=i<mcN-1?mcS+i+1:END;for(let i=0;i<pkN;i++)fat[pkS+i]=i<pkN-1?pkS+i+1:END;
+ const mfat=new Uint32Array(128).fill(FREE);for(let i=0;i<mn;i++)mfat[i]=i<mn-1?i+1:END;
+ const out=new Uint8Array((total+1)*SS),dv=new DataView(out.buffer);out.set([0xD0,0xCF,0x11,0xE0,0xA1,0xB1,0x1A,0xE1]);dv.setUint16(24,0x3E,true);dv.setUint16(26,3,true);dv.setUint16(28,0xFFFE,true);dv.setUint16(30,9,true);dv.setUint16(32,6,true);dv.setUint32(44,nf,true);dv.setUint32(48,dS,true);dv.setUint32(56,4096,true);dv.setUint32(60,mfS,true);dv.setUint32(64,1,true);dv.setUint32(68,END,true);dv.setUint32(72,0,true);
+ for(let i=0;i<109;i++)dv.setUint32(76+i*4,i<nf?i:FREE,true);const sec=i=>(i+1)*SS;
+ fat.forEach((v,i)=>dv.setUint32(sec(0)+i*4,v,true));mfat.forEach((v,i)=>dv.setUint32(sec(mfS)+i*4,v,true));out.set(mini,sec(mcS));out.set(pkg,sec(pkS));
+ const ent=(i,name,type,color,l,r,c,st,sz)=>{const o=sec(dS)+i*128;for(let k=0;k<name.length;k++)dv.setUint16(o+k*2,name.charCodeAt(k),true);dv.setUint16(o+64,name?(name.length+1)*2:0,true);out[o+66]=type;out[o+67]=color;dv.setUint32(o+68,l,true);dv.setUint32(o+72,r,true);dv.setUint32(o+76,c,true);dv.setUint32(o+116,st,true);dv.setUint32(o+120,sz%4294967296,true);dv.setUint32(o+124,Math.floor(sz/4294967296),true)};
+ ent(0,'Root Entry',5,1,FREE,FREE,1,mcS,mini.length);ent(1,'EncryptionInfo',2,1,FREE,2,FREE,0,info.length);ent(2,'EncryptedPackage',2,0,FREE,FREE,FREE,pkS,pkg.length);ent(3,'',0,0,FREE,FREE,FREE,0,0);return out}
+function cfbRead(buf){const u=new Uint8Array(buf),dv=new DataView(u.buffer,u.byteOffset,u.byteLength),ss=1<<dv.getUint16(30,true),ms=1<<dv.getUint16(32,true),cut=dv.getUint32(56,true),dirS=dv.getUint32(48,true),mfS=dv.getUint32(60,true);let ds=dv.getUint32(68,true),nd=dv.getUint32(72,true);
+ const dif=[];for(let i=0;i<109;i++)dif.push(dv.getUint32(76+i*4,true));while(ds<0xFFFFFFFA&&nd-->0){const o=(ds+1)*ss;for(let i=0;i<ss/4-1;i++)dif.push(dv.getUint32(o+i*4,true));ds=dv.getUint32(o+ss-4,true)}
+ const fat=[];for(const d of dif){if(d>=0xFFFFFFFA)continue;const o=(d+1)*ss;for(let i=0;i<ss/4;i++)fat.push(dv.getUint32(o+i*4,true))}
+ const chain=(s,f)=>{const r=[];while(s<0xFFFFFFFA&&r.length<4e6){r.push(s);s=f[s]}return r},rd=s=>{const ch=chain(s,fat),o=new Uint8Array(ch.length*ss);ch.forEach((c,i)=>o.set(u.subarray((c+1)*ss,(c+2)*ss),i*ss));return o};
+ const dir=rd(dirS),d2=new DataView(dir.buffer),ents=[];for(let i=0;i<dir.length;i+=128){const nl=d2.getUint16(i+64,true);let name='';for(let k=0;k<Math.max(nl-2,0);k+=2)name+=String.fromCharCode(d2.getUint16(i+k,true));ents.push({name,type:dir[i+66],start:d2.getUint32(i+116,true),size:d2.getUint32(i+120,true)+d2.getUint32(i+124,true)*4294967296})}
+ const mini=rd(ents[0].start),mb=rd(mfS),mdv=new DataView(mb.buffer),mfat=[];for(let i=0;i<mb.length;i+=4)mfat.push(mdv.getUint32(i,true));const out={};
+ for(const e of ents){if(e.type!==2)continue;if(e.size<cut){const ch=chain(e.start,mfat),o=new Uint8Array(ch.length*ms);ch.forEach((c,i)=>o.set(mini.subarray(c*ms,(c+1)*ms),i*ms));out[e.name]=o.slice(0,e.size)}else out[e.name]=rd(e.start).slice(0,e.size)}return out}
+function protectXlsx(zipBytes){const xl=DB.xl,key=unhex(xl.key),n=zipBytes.length,pad16=new Uint8Array(Math.ceil(n/16)*16);pad16.set(zipBytes);const pkg=catU(le32(n),le32(0),AESX.ecb(key,pad16));return cfbWrite(encInfo(xl),pkg)}
+function isOle(u){return u.length>8&&u[0]===0xD0&&u[1]===0xCF&&u[2]===0x11&&u[3]===0xE0}
+function decryptOle(buf,pwAsk){const st=cfbRead(buf),info=st['EncryptionInfo'],pk=st['EncryptedPackage'];if(!info||!pk)throw new Error('Not an encrypted workbook');const iv=new DataView(info.buffer,info.byteOffset,info.byteLength),hs=iv.getUint32(8,true),vo=12+hs;
+ if(iv.getUint16(0,true)!==3)throw new Error('Unsupported encryption type (only files written by this app can be opened)');const salt=info.slice(vo+4,vo+20),ev=info.slice(vo+20,vo+36),evh=info.slice(vo+40,vo+72);let key=null;
+ if(DB&&DB.xl&&DB.xl.salt===hex(salt))key=unhex(DB.xl.key);else{const pw=pwAsk();if(pw==null)throw new Error('Cancelled');key=stdKey(pw,salt)}
+ const v=AESX.ecb(key,ev,true),h=AESX.ecb(key,evh,true),sh=sha1(v);for(let i=0;i<20;i++)if(sh[i]!==h[i])throw new Error('Wrong password');
+ const size=new DataView(pk.buffer,pk.byteOffset).getUint32(0,true);return AESX.ecb(key,pk.subarray(8,8+Math.floor((pk.length-8)/16)*16),true).slice(0,size)}
+async function buildXlsx(){if(!DB.xl)return null;return protectXlsx(await buildXlsxPlain())}
+async function importXlsx(buf){let u=new Uint8Array(buf);if(isOle(u))u=decryptOle(buf,()=>prompt('This backup is password protected.\nEnter the Admin password:'));return importXlsxPlain(u.buffer.slice(u.byteOffset,u.byteOffset+u.byteLength))}
+/* ---- PDF invoice (no libraries) ---- */
+const pdfTW=(s,z)=>{let w=0;for(const c of s)w+=(c>='0'&&c<='9')?.556:(c==='.'||c===','||c===' '||c==="'"||c==='i'||c==='l'||c==='|'||c==='/'||c===':')?.278:(c>='A'&&c<='Z')?.68:(c==='m'||c==='w'||c==='W')?.8:.52;return w*z};
+const pdfFit=(s,w,z)=>{s=String(s);if(pdfTW(s,z)<=w)return s;while(s.length>1&&pdfTW(s+'..',z)>w)s=s.slice(0,-1);return s+'..'};
+function pdfInvoice(snap){const W=595,H=842,ops=['0.5 w'],user=snap.user||(USER&&USER.name)||'';
+ const T=(x,y,s,z=9,b=false,al='l')=>{s=String(s).replace(/[^\x20-\x7e\xa0-\xff]/g,'?');const w=pdfTW(s,z);if(al==='r')x-=w;else if(al==='c')x-=w/2;ops.push(`BT /F${b?2:1} ${z} Tf ${x.toFixed(2)} ${(H-y).toFixed(2)} Td (${s.replace(/([\\()])/g,'\\$1')}) Tj ET`)};
+ const L=(a,b,c,d)=>ops.push(`${a} ${H-b} m ${c} ${H-d} l S`);
+ T(W/2,52,DB.settings.shop,18,true,'c');L(40,62,555,62);T(40,86,'Invoice#: '+snap.inv,11,true);T(555,86,'Date: '+fd(snap.date),11,true,'r');T(40,102,'Salesman: '+user,10);
+ const cols=[['SN',28,'c'],['Product ID',62,'l'],['Product Name',235,'l'],['Quantity',50,'r'],['Unit Price',60,'r'],['Total Price',80,'r']];let y=116,x=40;
+ const xs=[40];cols.forEach(c=>xs.push(xs[xs.length-1]+c[1]));L(40,y,555,y);cols.forEach((c,i)=>T(xs[i]+(c[2]==='r'?c[1]-4:c[2]==='c'?c[1]/2:4),y+13,c[0],9,true,c[2]));y+=18;L(40,y,555,y);
+ snap.lines.forEach((l,i)=>{const cell=[String(i+1),l.id,pdfFit(l.pn,cols[2][1]-8,9),l.q,fmt(l.up),String(fmt(l.tp))];cell.forEach((v,k)=>T(xs[k]+(cols[k][2]==='r'?cols[k][1]-4:cols[k][2]==='c'?cols[k][1]/2:4),y+12,v,9,false,cols[k][2]));y+=17;L(40,y,555,y)});
+ xs.forEach(a=>L(a,116,a,y));y+=20;const R=(k,v,b)=>{T(470,y,k,10,b,'r');T(555,y,v,10,b,'r');y+=16};
+ R('Total',fmt(snap.t),true);if(snap.disc)R('Discount',fmt(snap.disc));R('Payable Amount',fmt(snap.pay),true);if(snap.given){R('Amount Given',fmt(snap.given));R('Return to Customer',fmt(n2(Number(snap.given)-snap.pay)))}
+ y+=14;T(40,y,'Served by: '+user,9);T(W/2,820,'Thank you for your purchase.',9,false,'c');
+ const content=ops.join('\n'),objs=['<</Type/Catalog/Pages 2 0 R>>','<</Type/Pages/Kids[3 0 R]/Count 1>>',`<</Type/Page/Parent 2 0 R/MediaBox[0 0 ${W} ${H}]/Resources<</Font<</F1 4 0 R/F2 5 0 R>>>>/Contents 6 0 R>>`,'<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>','<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold/Encoding/WinAnsiEncoding>>',`<</Length ${content.length}>>\nstream\n${content}\nendstream`];
+ let out='%PDF-1.4\n';const off=[];objs.forEach((o,i)=>{off.push(out.length);out+=`${i+1} 0 obj\n${o}\nendobj\n`});const xr=out.length;out+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`+off.map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('')+`trailer\n<</Size ${objs.length+1}/Root 1 0 R>>\nstartxref\n${xr}\n%%EOF`;
+ const u=new Uint8Array(out.length);for(let i=0;i<out.length;i++)u[i]=out.charCodeAt(i)&255;return u}
+const safeName=s=>String(s).replace(/[\\/:*?"<>|]/g,'-').trim();
+const invPdfName=snap=>safeName(snap.inv)+'_'+safeName(snap.user||USER.name)+'.pdf';
+function download(name,bytes,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes],{type}));a.download=name;a.click()}
+/* ---- local folder (File System Access API) ---- */
+let DIR=null,META={dirty:false,rev:0,sha:{}},GH=null,GHQ=[],GHBUSY=false;
+const SYNC={dir:DIR?'perm':'off',gh:'off',last:'',msg:''};
+async function dirPerm(ask){if(!DIR)return false;try{let p=await DIR.queryPermission({mode:'readwrite'});if(p!=='granted'&&ask)p=await DIR.requestPermission({mode:'readwrite'});return p==='granted'}catch{return false}}
+async function writeFile(path,name,data,unique){let d=DIR;for(const p of path)d=await d.getDirectoryHandle(p,{create:true});
+ if(unique){let ex=false;try{await d.getFileHandle(name);ex=true}catch{}if(ex){const i=name.lastIndexOf('.');name=name.slice(0,i)+'_'+new Date().toTimeString().slice(0,8).replace(/:/g,'')+name.slice(i)}}
+ const fh=await d.getFileHandle(name,{create:true}),w=await fh.createWritable();await w.write(data);await w.close();return name}
+async function saveExcelNow(){if(!DIR)return false;if(!await dirPerm(false)){SYNC.dir='perm';syncUI();return false}
+ try{const xb=await buildXlsx();if(!xb){SYNC.dir='err';SYNC.msg='Excel not written yet: the Admin must log in once to set the file password.';syncUI();return false}await writeFile([],XLSX_NAME,xb);SYNC.dir='ok';SYNC.last=new Date().toLocaleTimeString();SYNC.msg='';syncUI();return true}catch(e){SYNC.dir='err';SYNC.msg=/NoModification|locked|busy/i.test(e.name+e.message)?'Close '+XLSX_NAME+' in Excel – it is locked. Will retry on the next change.':String(e.message||e);syncUI();return false}}
+let xlT=null,ghT=null;
+function syncSoon(){META.dirty=true;META.rev++;idb.set('meta',META);if(DIR){clearTimeout(xlT);xlT=setTimeout(saveExcelNow,1200)}if(GH){clearTimeout(ghT);ghT=setTimeout(()=>ghPush(false),5000)}}
+async function connectDir(){if(!window.showDirectoryPicker){alert('This browser cannot save into a folder automatically.\nUse Chrome or Edge on a computer. (You can still use "Download Excel backup".)');return}
+ let h;try{h=await showDirectoryPicker({mode:'readwrite',id:'kpharma'})}catch{return}DIR=h;await idb.set('dir',h);
+ let ex=false;try{await h.getFileHandle(XLSX_NAME);ex=true}catch{}
+ if(ex&&confirm('A backup file ('+XLSX_NAME+') already exists in this folder.\n\nOK = load the data from it (replaces the current purchases, sales and returns)\nCancel = overwrite it with the current data')){try{const f=await(await h.getFileHandle(XLSX_NAME)).getFile();Object.assign(DB,await importXlsx(await f.arrayBuffer()));bump();toast('Data loaded from the backup file.')}catch(e){alert('Could not read the backup: '+e.message)}}
+ await saveExcelNow();toast('Backup folder connected. '+XLSX_NAME+' created.');render();syncModal()}
+async function savePdfFor(snap){const name=invPdfName(snap),bytes=pdfInvoice(snap);
+ if(DIR&&await dirPerm(false)){try{const n=await writeFile(['Invoice_PDF'],name,bytes,true);toast('Invoice saved: Invoice_PDF/'+n,4000)}catch(e){alert('Could not save the invoice PDF to the folder ('+e.message+'). It will be downloaded instead.');download(name,bytes,'application/pdf')}}
+ else download(name,bytes,'application/pdf');
+ if(GH)GHQ.push({path:GH.dir+'invoices/'+name,bytes})}
+/* ---- GitHub sync ---- */
+const ghUrl=(p,q='')=>'https://api.github.com/repos/'+GH.owner+'/'+GH.repo+'/contents/'+p.split('/').map(encodeURIComponent).join('/')+q;
+const ghH=raw=>({Authorization:'Bearer '+GH.token,Accept:raw?'application/vnd.github.raw+json':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'});
+const b64=u=>{let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)};
+async function ghMeta(path){const r=await fetch(ghUrl(path,'?ref='+encodeURIComponent(GH.branch)),{headers:ghH(false)});if(r.status===404)return null;if(!r.ok)throw new Error('GitHub error '+r.status+(r.status===401?' (check the token)':''));const j=await r.json();return{sha:j.sha,size:j.size}}
+async function ghPut(path,bytes,sha,msg){const body={message:msg,content:b64(bytes),branch:GH.branch};if(sha)body.sha=sha;return fetch(ghUrl(path),{method:'PUT',headers:{...ghH(false),'Content-Type':'application/json'},body:JSON.stringify(body)})}
+async function ghPutRetry(path,bytes,msg){let sha=META.sha[path];let r=await ghPut(path,bytes,sha,msg);if(r.status===409||r.status===422){const m=await ghMeta(path);r=await ghPut(path,bytes,m?m.sha:undefined,msg)}if(!r.ok)throw new Error('GitHub error '+r.status);META.sha[path]=(await r.json()).content.sha}
+async function ghLoadRemote(m){const r=await fetch(ghUrl(GH.dir+'data.json','?ref='+encodeURIComponent(GH.branch)),{headers:ghH(true)});if(!r.ok)throw new Error('GitHub error '+r.status);const d=fixDB(JSON.parse(await r.text()));DB=d;META.sha[GH.dir+'data.json']=m.sha;META.dirty=false;await idb.set('db',DB);await idb.set('meta',META);cache={}}
+function ghConflict(m){const mb=modal(`<h3>Data changed on another device</h3><p>The data on GitHub is newer than this device's copy, and this device also has unsynced changes.</p><div class="row"><button id="c1">Load the GitHub version (discard this device's unsynced changes)</button><button class="dng" id="c2">Overwrite GitHub with this device's data</button><button class="sec" id="c3">Decide later</button></div>`);
+ $('#c1',mb).onclick=async()=>{closeModal();try{await ghLoadRemote(m);afterRemoteLoad()}catch(e){alert(e.message)}};$('#c2',mb).onclick=async()=>{closeModal();META.sha[GH.dir+'data.json']=m.sha;await ghPush(true)};$('#c3',mb).onclick=closeModal}
+function afterRemoteLoad(){if(USER){USER=DB.users.find(u=>u.name===USER.name);if(!USER){alert('Your user no longer exists in the updated data.');logout();return}}PF.A=PF.B=RF=null;SF=null;if(USER)render();toast('Data refreshed from GitHub.')}
+async function ghPull(silent){if(!GH)return;try{SYNC.gh='busy';syncUI();const dp=GH.dir+'data.json',m=await ghMeta(dp);SYNC.gh='ok';if(!m){syncUI();return 'none'}if(m.sha===META.sha[dp]){syncUI();return 'same'}
+  if(!META.dirty){await ghLoadRemote(m);syncUI();if(silent)afterRemoteLoad();return 'loaded'}ghConflict(m);syncUI();return 'conflict'}catch(e){SYNC.gh='err';SYNC.msg=e.message;syncUI();return 'err'}}
+async function ghPush(force){if(!GH||GHBUSY)return;GHBUSY=true;SYNC.gh='busy';syncUI();const rev=META.rev;
+ try{const dp=GH.dir+'data.json',bytes=new TextEncoder().encode(JSON.stringify(DB));let sha=META.sha[dp];let r=await ghPut(dp,bytes,sha,'K Pharma data '+new Date().toISOString());
+  if(r.status===409||r.status===422){const m=await ghMeta(dp);if(m&&m.sha!==sha&&!force){GHBUSY=false;SYNC.gh='err';SYNC.msg='Conflict';syncUI();ghConflict(m);return}r=await ghPut(dp,bytes,m?m.sha:undefined,'K Pharma data '+new Date().toISOString())}
+  if(!r.ok)throw new Error('GitHub error '+r.status);META.sha[dp]=(await r.json()).content.sha;
+  {const xb=await buildXlsx();if(xb)await ghPutRetry(GH.dir+XLSX_NAME,xb,'K Pharma Excel backup')}
+  while(GHQ.length){const q=GHQ[0];await ghPutRetry(q.path,q.bytes,'Invoice '+q.path.split('/').pop());GHQ.shift()}
+  if(META.rev===rev)META.dirty=false;await idb.set('meta',META);SYNC.gh='ok';SYNC.last=new Date().toLocaleTimeString();SYNC.msg='';if(META.rev!==rev)ghT=setTimeout(()=>ghPush(false),2000)}
+ catch(e){SYNC.gh='err';SYNC.msg=e.message}GHBUSY=false;syncUI()}
+/* ---- UI ---- */
+function syncUI(){const b=$('#syncb');if(!b)return;const ok=(SYNC.dir==='ok'||SYNC.gh==='ok'),bad=SYNC.dir==='err'||SYNC.gh==='err'||SYNC.dir==='perm';const parts=[];if(DIR)parts.push('Folder '+(SYNC.dir==='ok'?'✔':SYNC.dir==='perm'?'(reconnect)':'✖'));if(GH)parts.push('GitHub '+(SYNC.gh==='ok'?'✔':SYNC.gh==='busy'?'…':'✖'));
+ b.textContent='Backup: '+(parts.join(' · ')||'not connected')+(SYNC.last&&ok?' '+SYNC.last:'');b.style.background=bad?'#ffd9d9':ok?'#eaffea':'';b.title=SYNC.msg||''}
+function syncModal(pre){const dirTxt=!window.showDirectoryPicker?'Not supported in this browser (use Chrome/Edge on a computer).':!DIR?'Not connected.':SYNC.dir==='ok'?'Connected – every change updates '+XLSX_NAME+'; invoices go to Invoice_PDF/.':SYNC.dir==='perm'?'Permission needed – click “Reconnect”.':'Problem: '+SYNC.msg;
+ const g=GH||{owner:'',repo:'',branch:'main',dir:'kpharma/',token:''};const admin=pre||isAdmin();
+ const mb=modal(`<h3>Backup & Sync</h3>
+ ${pre?'':`<div class="card"><h3>1. Local folder (Excel backup + invoice PDFs)</h3><p class="mut" style="margin-top:0">Choose the folder where this HTML file is saved. ${XLSX_NAME} is created there first (<b>protected with the Admin password</b>) and rewritten after every change; invoice PDFs are saved in <b>Invoice_PDF</b> as <b>InvoiceID_Salesman.pdf</b>.</p><p><b>${esc(dirTxt)}</b></p><div class="row"><button id="d1">${DIR?'Change folder':'Connect folder'}</button>${DIR&&SYNC.dir==='perm'?'<button id="d2">Reconnect</button>':''}${DIR?'<button class="sec" id="d3">Save backup now</button>':''}<button class="sec" id="d4">Download Excel backup</button><label class="mut">Restore from Excel: <input type="file" id="d5" accept=".xlsx"></label></div></div>`}
+ <div class="card"><h3>${pre?'':'2. '}GitHub (use from anywhere)</h3><p class="mut" style="margin-top:0">Data, the Excel backup and invoice PDFs are saved to a <b>private</b> GitHub repository after every change and loaded on any device. Use a fine-grained token limited to that one repository (Contents: read & write).</p>
+ ${admin?`<div class="frm" style="grid-template-columns:110px 1fr"><label>Owner</label><input id="g1" value="${esc(g.owner)}" placeholder="github user / org"><label>Repository</label><input id="g2" value="${esc(g.repo)}"><label>Branch</label><input id="g3" value="${esc(g.branch)}"><label>Folder</label><input id="g4" value="${esc(g.dir)}"><label>Token</label><input id="g5" type="password" value="${esc(g.token)}" placeholder="github_pat_…"></div><div class="row" style="margin-top:8px"><button id="g6">Save & connect</button>${GH?'<button class="sec" id="g7">Sync now</button><button class="dng" id="g8">Disconnect</button>':''}</div>`:`<p><b>${GH?'Connected to '+esc(GH.owner+'/'+GH.repo):'Not connected (Admin can connect).'}</b></p>`}</div><div class="row"><button class="sec" id="cl">Close</button></div>`);
+ const q=s=>$(s,mb);q('#cl').onclick=closeModal;
+ if(q('#d1')){q('#d1').onclick=()=>connectDir();if(q('#d2'))q('#d2').onclick=async()=>{if(await dirPerm(true)){SYNC.dir='ok';await saveExcelNow();syncModal()}};if(q('#d3'))q('#d3').onclick=async()=>{if(await saveExcelNow())toast('Backup saved.')};
+  q('#d4').onclick=async()=>{const b=await buildXlsx();if(!b){alert('The Admin must log in once first, to set the Excel password.');return}download(XLSX_NAME,b,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')};
+  q('#d5').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=await importXlsx(await f.arrayBuffer());if(!confirm('Replace ALL purchases ('+d.purchases.length+'), sales ('+d.sales.length+') and returns ('+d.returns.length+') with this file?'))return;Object.assign(DB,d);bump();toast('Data restored from Excel.');render()}catch(er){alert('Could not read the file: '+er.message)}}}
+ if(q('#g6')){q('#g6').onclick=async()=>{const c={owner:q('#g1').value.trim(),repo:q('#g2').value.trim(),branch:q('#g3').value.trim()||'main',dir:(q('#g4').value.trim().replace(/^\/+/,'')||'kpharma/'),token:q('#g5').value.trim()};if(c.dir&&!c.dir.endsWith('/'))c.dir+='/';if(!c.owner||!c.repo||!c.token){alert('Owner, repository and token are required.');return}
+   GH=c;try{const m=await ghMeta(c.dir+'data.json');await idb.set('gh',c);
+    if(m){if(confirm('GitHub already contains K Pharma data.\n\nOK = load it on this device (replaces local data)\nCancel = overwrite GitHub with this device\'s data')){await ghLoadRemote(m);closeModal();afterRemoteLoad();if(!USER){$('#login').style.display='';}}else{META.sha[c.dir+'data.json']=m.sha;syncSoon();await ghPush(true)}}
+    else{syncSoon();await ghPush(true);toast('Connected. Initial data uploaded to GitHub.')}syncUI();if(modalOpen())syncModal(pre)}catch(e){GH=null;alert('Could not connect: '+e.message)}};
+  if(q('#g7'))q('#g7').onclick=async()=>{await ghPull(true);await ghPush(false);toast('Synced.')};if(q('#g8'))q('#g8').onclick=async()=>{if(confirm('Disconnect GitHub on this device?')){GH=null;SYNC.gh='off';await idb.set('gh',null);syncUI();syncModal(pre)}}}}
+async function offerFolder(){if(DIR||!window.showDirectoryPicker||await idb.get('nofolder'))return;
+ const mb=modal(`<h3>Automatic backup</h3><p>Choose the folder where this HTML file is saved. The password-protected Excel backup <b>${XLSX_NAME}</b> and the <b>Invoice_PDF</b> folder will be created there and updated automatically after every change.</p><div class="row"><button id="of1">Choose folder</button><button class="sec" id="of2">Not now</button><button class="sec" id="of3">Don't ask again on this device</button></div>`);
+ $('#of1',mb).onclick=()=>{closeModal();connectDir()};$('#of2',mb).onclick=closeModal;$('#of3',mb).onclick=async()=>{await idb.set('nofolder',true);closeModal()}}
+const modalOpen=()=>$('#modal').classList.contains('on');
+$('#syncb').onclick=()=>syncModal(false);$('#ghl').onclick=e=>{e.preventDefault();syncModal(true)};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&GH&&!META.dirty&&!GHBUSY&&!modalOpen())ghPull(true)});
+
+/* ================= import the previous .xlsm / .xlsx file ================= */
+async function readOriginal(buf){const z=await unzipBuf(buf),dec=new TextDecoder(),dp=new DOMParser(),get=n=>z[n]?dp.parseFromString(dec.decode(z[n]),'text/xml'):null;
+ const wb=get('xl/workbook.xml'),rels=get('xl/_rels/workbook.xml.rels');if(!wb||!rels)throw new Error('This is not an Excel workbook.');
+ const tgt={};for(const r of rels.getElementsByTagName('Relationship'))tgt[r.getAttribute('Id')]=r.getAttribute('Target');
+ const sheets={};for(const s of wb.getElementsByTagName('sheet'))sheets[s.getAttribute('name')]='xl/'+String(tgt[s.getAttribute('r:id')]).replace(/^\/?(xl\/)?/,'');
+ const ss=[],sd=get('xl/sharedStrings.xml');if(sd)for(const si of sd.getElementsByTagName('si')){let t='';for(const ch of si.childNodes){if(ch.nodeName==='t')t+=ch.textContent;else if(ch.nodeName==='r'){const tt=ch.getElementsByTagName('t')[0];if(tt)t+=tt.textContent}}ss.push(t)}
+ const st=get('xl/styles.xml'),nf={};if(st)for(const f of st.getElementsByTagName('numFmt'))nf[f.getAttribute('numFmtId')]=f.getAttribute('formatCode');
+ const isDateFmt=id=>{id=+id;if((id>=14&&id<=22)||(id>=27&&id<=36)||(id>=45&&id<=47)||(id>=50&&id<=58))return true;const f=nf[id];return f?/[dy]/i.test(f.replace(/"[^"]*"|\[[^\]]*\]|\\./g,'')):false};
+ const dateXf=[];if(st){const cx=st.getElementsByTagName('cellXfs')[0];if(cx)for(const x of cx.getElementsByTagName('xf'))dateXf.push(isDateFmt(x.getAttribute('numFmtId')))}
+ const readSheet=name=>{const p=sheets[name],rows=new Map();if(!p||!z[p])return rows;const doc=dp.parseFromString(dec.decode(z[p]),'text/xml');
+  for(const r of doc.getElementsByTagName('row')){const rn=+r.getAttribute('r'),arr=[];for(const c of r.getElementsByTagName('c')){const m=/^([A-Z]+)/.exec(c.getAttribute('r'));let ci=0;for(const ch of m[1])ci=ci*26+ch.charCodeAt(0)-64;ci--;const t=c.getAttribute('t'),s=+c.getAttribute('s')||0,ve=c.getElementsByTagName('v')[0],v=ve?ve.textContent:'';let val='';
+    if(t==='inlineStr')val=[...c.getElementsByTagName('t')].map(x=>x.textContent).join('');else if(t==='s')val=ss[+v]??'';else if(t==='str')val=v;else if(t==='b'||t==='e')val='';else if(v!==''){const n=Number(v);val=(dateXf[s]&&n>=1&&n<2958466)?{d:fromSerial(n)}:n}arr[ci]=val}rows.set(rn,arr)}return rows};
+ return{sheets,readSheet}}
+const iTx=v=>{if(v==null||v==='')return'';if(typeof v==='object')return(+v.d.slice(8))+'/'+(+v.d.slice(5,7))+'/'+v.d.slice(0,4);if(typeof v==='number')return String(v).replace(/e\+?/,'E+').replace('E+-','E-');return String(v).trim()};
+const iNum=v=>{const n=typeof v==='number'?v:Number(v);return isNaN(n)?0:n};
+const dmy=s=>{let m=/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/.exec(s),y,d,mo;if(m){d=+m[1];mo=+m[2];y=+m[3]}else if(m=/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2})$/.exec(s)){d=+m[1];mo=+m[2];y=2000+ +m[3]}else return null;const t=new Date(Date.UTC(y,mo-1,d));return t.getUTCDate()===d&&t.getUTCMonth()===mo-1?t.toISOString().slice(0,10):null};
+const iDate=v=>{if(v&&typeof v==='object')return v.d;if(typeof v==='string')return dmy(v.trim())||'';return''};
+const iExp=v=>{if(v==null||v==='')return'';if(typeof v==='object')return v.d;const s=String(v).trim();return dmy(s)||s};
+async function parseOriginal(buf){const o=await readOriginal(buf);if(!o.sheets['Purchases(Total)']||!o.sheets['Sales(Total)'])throw new Error('Sheets "Purchases(Total)" and "Sales(Total)" were not found in this file.');
+ const P=[],S=[],R=[];for(const[rn,r]of o.readSheet('Purchases(Total)')){if(rn<6||!(iTx(r[2])||r[1]))continue;P.push({d:iDate(r[1]),id:iTx(r[2]),co:iTx(r[3]),pn:iTx(r[4]),gn:iTx(r[5]),df:iTx(r[6]),bt:iTx(r[7]),ex:iExp(r[8]),lo:iTx(r[9]),bx:iNum(r[10]),up:iNum(r[11]),q:iNum(r[12]),tp:Number(r[13])||0,u:iTx(r[14])})}
+ for(const[rn,r]of o.readSheet('Sales(Total)')){if(rn<6||!(iTx(r[3])||r[1]))continue;S.push({d:iDate(r[1]),inv:iTx(r[2]),id:iTx(r[3]),pn:iTx(r[4]),bt:iTx(r[5]),q:iNum(r[6]),pr:iNum(r[7]),u:iTx(r[9])})}
+ const res={P,S,R,users:[],lists:null,cats:null};
+ if(o.sheets['User']){for(const[rn,r]of o.readSheet('User')){if(rn<2)continue;const n=iTx(r[1]);if(n)res.users.push({name:n,pw:iTx(r[2]),chg:/^yes$/i.test(iTx(r[3]))})}}
+ if(o.sheets['Purchases_Entry']){const rows=o.readSheet('Purchases_Entry'),col=i=>{const s=new Set();for(const[rn,r]of rows)if(rn>=6&&r[i]!=null&&iTx(r[i]))s.add(iTx(r[i]));return[...s]};res.lists={locs:col(14),forms:col(16),companies:col(17)}}
+ if(o.sheets['Sales_Entry']){const rows=o.readSheet('Sales_Entry'),rg=(a,b)=>{const s=[];for(const[rn,r]of rows)if(rn>=a&&rn<=b&&r[8]!=null&&iTx(r[8]))s.push(iTx(r[8]));return s};res.cats={cat1:rg(10,26),cat2:rg(28,44)}}
+ return res}
+async function parseAnyFile(buf){const u=new Uint8Array(buf);if(isOle(u)){const d=await importXlsx(buf);return{P:d.purchases,S:d.sales,R:d.returns,users:[],lists:null,cats:null,backup:true}}
+ const z=await unzipBuf(buf),wbx=z['xl/workbook.xml']?new TextDecoder().decode(z['xl/workbook.xml']):'';if(!wbx)throw new Error('This is not an Excel workbook (.xlsm / .xlsx).');
+ if(/name="Purchases_Entry"/.test(wbx))return parseOriginal(buf);if(/name="Returns\(Total\)"/.test(wbx)){const d=await importXlsx(buf);return{P:d.purchases,S:d.sales,R:d.returns,users:[],lists:null,cats:null,backup:true}}
+ return parseOriginal(buf)}
+async function applyImport(res,opt,fname){await idb.set('prev',{at:new Date().toISOString(),file:fname,db:DB});
+ DB.purchases=res.P;DB.sales=res.S;if(res.backup)DB.returns=res.R||[];else if(!opt.keepReturns)DB.returns=[];
+ if(opt.lists&&res.lists){for(const k of['locs','forms','companies'])if(res.lists[k].length)DB.lists[k]=res.lists[k]}
+ if(opt.lists&&res.cats){if(res.cats.cat1.length)DB.settings.cat1=res.cats.cat1;if(res.cats.cat2.length)DB.settings.cat2=res.cats.cat2}
+ if(opt.users&&res.users.length){DB.users=res.users.map(u=>({name:u.name,pw:hashPw(u.name,u.pw),chg:u.chg}));const a=res.users.find(u=>u.name==='Admin');if(a)DB.xl=makeXl(a.pw,hashPw('Admin',a.pw));else if(!DB.users.some(u=>u.name==='Admin'))DB.users.unshift({name:'Admin',pw:hashPw('Admin','admin'),chg:true})}
+ DB.importLog=[{at:new Date().toISOString(),file:fname,p:res.P.length,s:res.S.length,by:USER.name},...(DB.importLog||[])].slice(0,20);
+ reArrange();PF.A=PF.B=RF=SF=null;if(opt.users){USER=DB.users.find(u=>u.name===USER.name);if(!USER){alert('Your user is no longer in the imported user list. Please log in again.');logout();return}saveSession()}}
+function pageImport(){const log=DB.importLog||[];
+ $('#view').innerHTML=`<div class="card"><h3>Import / update data from your previous file</h3><p class="mut" style="margin-top:0">Upload your existing <b>.xlsm</b> (or .xlsx / this app's Excel backup). Its Purchases(Total) and Sales(Total) sheets replace the data running here. Afterwards just keep working: every change is saved in the browser, to the Excel backup, and to GitHub if connected – ready for the next day.</p>
+ <div id="drop" style="border:2px dashed var(--gd);border-radius:10px;padding:34px;text-align:center"><div style="font-size:16px;margin-bottom:8px"><b>Drag & drop the file here</b></div><button id="imc">Choose file…</button><input type="file" id="imf" accept=".xlsm,.xlsx" style="display:none"></div><div id="imo" style="margin-top:12px"></div></div>
+ <div class="card"><h3>Import history</h3>${log.length?`<table><thead><tr><th>When</th><th>File</th><th>Purchases</th><th>Sales</th><th>By</th></tr></thead><tbody>${log.map(l=>`<tr><td>${esc(new Date(l.at).toLocaleString())}</td><td>${esc(l.file)}</td><td class="c">${l.p}</td><td class="c">${l.s}</td><td>${esc(l.by)}</td></tr>`).join('')}</tbody></table>`:'<p class="mut">No imports yet.</p>'}<div class="row" style="margin-top:8px"><button class="dng" id="imu">Undo last import (restore previous data)</button></div></div>`;
+ const doFile=async f=>{if(!f)return;const o=$('#imo');o.innerHTML='<b>Reading '+esc(f.name)+'… please wait</b>';let res;try{res=await parseAnyFile(await f.arrayBuffer())}catch(e){o.innerHTML='';alert('Could not read the file: '+e.message);return}
+  const cur={p:DB.purchases.length,s:DB.sales.length,r:DB.returns.length};
+  o.innerHTML=`<div class="card" style="background:var(--ok)"><h3>${esc(f.name)}</h3><table style="max-width:520px"><thead><tr><th></th><th>In the file</th><th>Running now</th></tr></thead><tbody><tr><td>Purchases rows</td><td class="c"><b>${res.P.length}</b></td><td class="c">${cur.p}</td></tr><tr><td>Sales rows</td><td class="c"><b>${res.S.length}</b></td><td class="c">${cur.s}</td></tr>${res.backup?`<tr><td>Return rows</td><td class="c"><b>${res.R.length}</b></td><td class="c">${cur.r}</td></tr>`:`<tr><td>Product returns</td><td class="c">–</td><td class="c">${cur.r}</td></tr>`}${res.users.length?`<tr><td>Users</td><td class="c"><b>${res.users.length}</b></td><td class="c">${DB.users.length}</td></tr>`:''}</tbody></table>
+  <div style="margin:10px 0">${res.lists?'<label><input type="checkbox" id="o1" checked> Also import the dropdown lists (company, location, dosage form) and shortage dosage lists</label><br>':''}${res.users.length?'<label><input type="checkbox" id="o2"> Also import users &amp; passwords from the file\'s User sheet (replaces current users)</label><br>':''}${!res.backup&&cur.r?`<label><input type="checkbox" id="o3"> Keep the ${cur.r} product return(s) recorded here</label>`:''}</div>
+  <p class="mut" style="margin:0 0 8px">The running data will be <b>replaced</b>. You can undo this from the history below.</p><div class="row"><button id="imgo">Replace running data</button><button class="sec" id="imno">Cancel</button></div></div>`;
+  $('#imno').onclick=()=>o.innerHTML='';$('#imgo').onclick=async()=>{const opt={lists:!!($('#o1')&&$('#o1').checked),users:!!($('#o2')&&$('#o2').checked),keepReturns:!!($('#o3')&&$('#o3').checked)};if(!confirm('Replace the running data with "'+f.name+'"?'))return;await applyImport(res,opt,f.name);if(USER){toast('Data replaced: '+res.P.length+' purchase rows, '+res.S.length+' sales rows. Saved.',5000);pageImport()}}};
+ $('#imc').onclick=()=>$('#imf').click();$('#imf').onchange=e=>doFile(e.target.files[0]);
+ const d=$('#drop');d.ondragover=e=>{e.preventDefault();d.style.background='var(--ok)'};d.ondragleave=()=>d.style.background='';d.ondrop=e=>{e.preventDefault();d.style.background='';doFile(e.dataTransfer.files[0])};
+ $('#imu').onclick=async()=>{const pv=await idb.get('prev');if(!pv){alert('There is no previous data to restore.');return}if(!confirm('Restore the data that was running before the last import ('+new Date(pv.at).toLocaleString()+')?'))return;const keepUser=USER.name;DB=fixDB(pv.db);await idb.set('prev',null);bump();USER=DB.users.find(u=>u.name===keepUser)||null;if(!USER){logout();return}PF.A=PF.B=RF=SF=null;toast('Previous data restored.');pageImport()}}
+
+
+/* ================= forgot password ================= */
+const rcNew=()=>{const al='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',b=crypto.getRandomValues(new Uint8Array(16));let s='';b.forEach((v,i)=>{s+=al[v%32];if(i%4===3&&i<15)s+='-'});return s};
+const rcHash=c=>sha256('rc|'+String(c).replace(/[\s-]/g,'').toUpperCase());
+const tmpPw=()=>{const al='abcdefghjkmnpqrstuvwxyz23456789',b=crypto.getRandomValues(new Uint8Array(8));return[...b].map(v=>al[v%al.length]).join('')};
+function newRecovery(){return new Promise(res=>{const code=rcNew();DB.recovery=rcHash(code);bump();const mb=modal(`<h3>Admin recovery code</h3><p>Write this code down and keep it somewhere safe. It is the only way to reset the Admin password if it is forgotten. <b>It is shown only once.</b></p><div style="font:700 22px monospace;letter-spacing:2px;text-align:center;padding:12px;border:2px dashed var(--gd);border-radius:8px;user-select:all">${code}</div><div class="row" style="margin-top:12px"><button class="sec" id="rcc">Copy</button><button id="rco">I have saved it</button></div>`);mb.dataset.lock=1;
+ $('#rcc',mb).onclick=()=>{try{navigator.clipboard.writeText(code).then(()=>toast('Copied'))}catch{}};$('#rco',mb).onclick=()=>{closeModal();res()}})}
+function forgotPw(){const mb=modal(`<h3>Forgot password</h3><label class="mut">User name</label><input id="fu" style="width:100%"><div id="fx" style="margin-top:10px"></div><div class="row" style="margin-top:12px"><button id="fn">Next</button><button class="sec" id="fc">Cancel</button></div>`);
+ $('#fc',mb).onclick=closeModal;$('#fu',mb).focus();
+ $('#fn',mb).onclick=()=>{const n=$('#fu',mb).value.trim();if(!n){alert('Enter your user name.');return}const u=DB.users.find(x=>x.name.toLowerCase()===n.toLowerCase());
+  if(u&&u.name==='Admin'){$('#fx',mb).innerHTML=`<p class="mut">Enter the Admin recovery code and choose a new password.</p><label class="mut">Recovery code</label><input id="f1" style="width:100%" placeholder="XXXX-XXXX-XXXX-XXXX"><label class="mut">New password</label><input id="f2" type="password" style="width:100%"><label class="mut">Confirm password</label><input id="f3" type="password" style="width:100%">`;$('#fu',mb).disabled=true;$('#fn',mb).textContent='Reset password';
+   $('#fn',mb).onclick=async()=>{const c=$('#f1',mb).value,p1=$('#f2',mb).value,p2=$('#f3',mb).value;if(!DB.recovery){alert('No recovery code has been set on this device/data. Restore the data from a backup that has one, or contact the person who set up the system.');return}
+    if(rcHash(c)!==DB.recovery){alert('Invalid recovery code.');return}if(!p1){alert('Password cannot be empty.');return}if(p1!==p2){alert('The passwords do not match.');return}
+    u.pw=hashPw('Admin',p1);u.chg=false;DB.xl=makeXl(p1,u.pw);bump();closeModal();alert('Admin password has been reset. A new recovery code will now be shown – save it.');await newRecovery();toast('You can now log in with the new password.')}}
+  else{if(u){DB.resets=(DB.resets||[]).filter(r=>r.name!==u.name);DB.resets.push({name:u.name,t:new Date().toISOString()});bump()}$('#fx',mb).innerHTML='<p><b>Request sent.</b> The Admin will see it in User Settings and give you a temporary password. You will be asked to choose a new password when you log in with it.</p>';$('#fn',mb).style.display='none'}}}
+$('#fpl').onclick=e=>{e.preventDefault();forgotPw()};
+/* ================= app shell ================= */
+const PAGES={sales:['Sales Entry',pageSales,0],purchase:['Purchases Entry',pagePurchase,0],return:['Product Return',pageReturn,0],rtotal:['Returns(Total)',pageRTotal,1],ptotal:['Purchases(Total)',pagePTotal,1],import:['Import Data',pageImport,1],stotal:['Sales(Total)',pageSTotal,1],stock:['Stock Summary',pageStock,1],history:['History View',pageHistory,1],search:['Search',pageSearch,1],users:['User Settings',pageUsers,1],settings:['Settings / Backup',pageSettings,1]};
+const isAdmin=()=>USER&&USER.name==='Admin';
+const allowed=p=>PAGES[p]&&(!PAGES[p][2]||isAdmin());
+function go(p){if(!allowed(p))return alert('Access Denied.\nOnly an Admin can perform this action.');PAGE=p;render()}
+function render(){if(!USER)return;if(!allowed(PAGE))PAGE='sales';$('#nav').innerHTML=Object.keys(PAGES).filter(allowed).map(k=>`<button data-p="${k}" class="${k===PAGE?'on':''}">${PAGES[k][0]}</button>`).join('');$('#who').textContent='User: '+USER.name;$('#brand').textContent=DB.settings.shop;const v=$('#view');v.onclick=v.onchange=v.oninput=v.ondblclick=null;saveSession();PAGES[PAGE][1]();window.scrollTo(0,0)}
+$('#nav').onclick=e=>{const b=e.target.closest('button');if(b)go(b.dataset.p)};
+function saveSession(){try{localStorage.setItem('kpharma_session',JSON.stringify({n:USER.name,h:USER.pw,p:PAGE}))}catch{}}
+function logout(){try{localStorage.removeItem('kpharma_session')}catch{}USER=null;PF.A=PF.B=SF=RF=null;for(const k in TV)delete TV[k];$('#app').style.display='none';$('#login').style.display='';$('#lu').value='';$('#lp').value='';$('#lu').focus()}
+$('#lo').onclick=logout;
+async function login(){if(DIR)dirPerm(true).then(ok=>{SYNC.dir=ok?'ok':'perm';syncUI();if(ok)saveExcelNow()});const n=$('#lu').value.trim(),p=$('#lp').value;if(!n||!p){alert('Please enter both username and password.');return}
+ const u=DB.users.find(x=>x.name.toLowerCase()===n.toLowerCase());if(!u){alert('Invalid username. Please try again.');$('#lu').value='';$('#lp').value='';return}
+ if(u.pw!==hashPw(u.name,p)){alert('Invalid password. Please try again.');$('#lp').value='';return}
+ if(u.chg){const np=await changePw(u);if(!np){logout();return}}
+ if(u.name==='Admin'&&(!DB.xl||DB.xl.ph!==u.pw)){DB.xl=makeXl(p,u.pw);bump()}
+ USER=u;$('#login').style.display='none';$('#app').style.display='';PAGE='sales';saveSession();SF=null;PF.A=PF.B=RF=null;render();toast(isAdmin()?'Welcome, Admin! All sheets are unlocked.':'Welcome, '+u.name+'!');if(isAdmin()&&!DB.recovery)await newRecovery();offerFolder()}
+function changePw(u){return new Promise(res=>{const m=modal(`<h3>Change Password</h3><p class="mut">You must change your password before continuing.</p><div class="frm"><label>New Password</label><input id="p1" type="password"><label>Confirm Password</label><input id="p2" type="password"></div><div class="row" style="margin-top:12px"><button id="ok">OK</button><button class="sec" id="cn">Cancel</button></div>`);
+ $('#cn',m).onclick=()=>{closeModal();res(false)};$('#ok',m).onclick=()=>{const a=$('#p1',m).value,b=$('#p2',m).value;if(!a){alert('Password cannot be empty.');return}if(a!==b){alert('The passwords do not match. Please try again.');$('#p1',m).value=$('#p2',m).value='';return}u.pw=hashPw(u.name,a);u.chg=false;if(u.name==='Admin')DB.xl=makeXl(a,u.pw);bump();closeModal();alert('Password changed successfully. You will now be logged in.');res(a)}})}
+$('#lb').onclick=login;$('#lp').onkeydown=e=>{if(e.key==='Enter')login()};$('#lu').onkeydown=e=>{if(e.key==='Enter')$('#lp').focus()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#modal').classList.contains('on')&&!$('.invoice')&&!$('#modal [data-lock]'))closeModal()});
+(async()=>{await idb.open();DIR=await idb.get('dir');GH=await idb.get('gh');META=(await idb.get('meta'))||META;META.sha=META.sha||{};SYNC.dir=DIR?((await dirPerm(false))?'ok':'perm'):'off';SYNC.gh=GH?'ok':'off';syncUI();
+ DB=await idb.get('db');if(DB)fixDB(DB);if(!DB){DB=await loadSeed();await idb.set('db',DB)}if(GH)await ghPull(false);
+ let restored=false;try{const s=JSON.parse(localStorage.getItem('kpharma_session')||'null');const u=s&&DB.users.find(x=>x.name===s.n&&x.pw===s.h&&!x.chg);if(u){USER=u;PAGE=(PAGES[s.p]&&s.p!=='users')?s.p:'sales';$('#login').style.display='none';$('#app').style.display='';render();restored=true;if(DIR&&SYNC.dir==='perm')document.addEventListener('click',()=>dirPerm(true).then(ok=>{SYNC.dir=ok?'ok':'perm';syncUI();if(ok)saveExcelNow()}),{once:true})}}catch(e){}
+ if(!restored){$('#login').style.display='';$('#lu').focus()}})();
+</script>
+</body>
+</html>
